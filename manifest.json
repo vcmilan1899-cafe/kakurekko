@@ -1,0 +1,11 @@
+{
+  "name": "かくれっこ ずかん",
+  "short_name": "かくれっこ",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fdf7e9",
+  "theme_color": "#3aa76d",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

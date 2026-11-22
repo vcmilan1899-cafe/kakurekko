@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3aa76d">
+<title>かくれっこ ずかん</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #fdf7e9;
+    --card: #ffffff;
+    --ink: #3b3427;
+    --sub: #8a7e68;
+    --main: #3aa76d;
+    --main-dark: #2a7d51;
+    --accent: #ff8a3d;
+    --line: #eadfc6;
+    --shadow: 0 4px 0 rgba(0,0,0,.08);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+    font-size: 17px;
+    -webkit-user-select: none; user-select: none;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+
+  header {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--main); color: #fff;
+    padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 0 var(--main-dark);
+  }
+  header h1 { margin: 0; font-size: 21px; letter-spacing: .05em; }
+  .count { background: rgba(255,255,255,.22); border-radius: 999px; padding: 4px 12px; font-weight: bold; }
+
+  main { padding: 16px 16px 110px; max-width: 720px; margin: 0 auto; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+    display: flex; background: #fff; border-top: 2px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  nav button {
+    flex: 1; border: 0; background: none; padding: 10px 4px 12px;
+    font-size: 13px; color: var(--sub); font-weight: bold;
+  }
+  nav button .ico { display: block; font-size: 26px; line-height: 1.2; }
+  nav button.active { color: var(--main-dark); background: #eef8f1; }
+
+  .big-btn {
+    display: block; width: 100%; border: 0; border-radius: 22px;
+    background: var(--accent); color: #fff; font-size: 24px; font-weight: bold;
+    padding: 22px 16px; box-shadow: 0 6px 0 #d46a22;
+  }
+  .big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #d46a22; }
+  .btn {
+    border: 0; border-radius: 14px; background: var(--main); color: #fff; font-weight: bold;
+    padding: 12px 18px; box-shadow: 0 4px 0 var(--main-dark);
+  }
+  .btn.gray { background: #b9ae98; box-shadow: 0 4px 0 #938871; }
+  .btn.red { background: #e2574c; box-shadow: 0 4px 0 #b23b32; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.2); }
+
+  .hero { text-align: center; padding: 8px 0 18px; }
+  .hero svg { width: 220px; height: auto; }
+  .hero p { margin: 6px 0 0; color: var(--sub); line-height: 1.7; }
+
+  .scanner { position: relative; border-radius: 22px; overflow: hidden; background: #000; aspect-ratio: 3/4; display: none; }
+  .scanner.on { display: block; }
+  .scanner video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .scanner .frame {
+    position: absolute; inset: 18% 14%; border: 5px dashed rgba(255,255,255,.9); border-radius: 24px;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  .scanner .tip {
+    position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; color: #fff;
+    font-weight: bold; text-shadow: 0 1px 4px #000;
+  }
+  @keyframes pulse { 50% { transform: scale(1.04); opacity: .7; } }
+  .scan-actions { margin-top: 14px; text-align: center; }
+
+  .progress { margin: 18px 0 0; background: var(--card); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); }
+  .bar { height: 16px; background: #efe6d2; border-radius: 999px; overflow: hidden; margin-top: 8px; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, #6fd39a, var(--main)); border-radius: 999px; transition: width .6s; }
+
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  @media (min-width: 560px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  .card {
+    background: var(--card); border: 0; border-radius: 18px; padding: 10px 8px 12px; text-align: center;
+    box-shadow: var(--shadow); position: relative;
+  }
+  .card svg { width: 100%; height: auto; }
+  .card .no { position: absolute; left: 10px; top: 8px; font-size: 12px; color: var(--sub); font-weight: bold; }
+  .card .name { font-weight: bold; font-size: 16px; }
+  .card .stars { color: #f5b301; font-size: 13px; letter-spacing: 1px; }
+  .card.unfound { background: #f1ebdd; }
+  .card.unfound .name { color: #a99f8a; }
+  .hint-tag { display: inline-block; margin-top: 4px; font-size: 12px; background: #fff3c4; color: #8a6d00; padding: 2px 8px; border-radius: 999px; }
+
+  .panel { background: var(--card); border-radius: 18px; padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .panel h2 { margin: 0 0 8px; font-size: 18px; }
+  .panel p { margin: 6px 0; line-height: 1.7; color: #5d5443; font-size: 15px; }
+  .hint-row { display: grid; grid-template-columns: 56px 1fr; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px dashed var(--line); }
+  .hint-row svg { width: 56px; height: auto; }
+  .hint-row input { width: 100%; padding: 10px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-size: 15px; -webkit-user-select: text; user-select: text; }
+  .hint-row label { font-size: 13px; color: var(--sub); font-weight: bold; }
+
+  /* overlays */
+  .overlay {
+    position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center;
+    background: rgba(40,32,20,.72); padding: 20px;
+  }
+  .overlay.show { display: flex; }
+  .sheet { background: #fff; border-radius: 26px; padding: 20px; width: 100%; max-width: 420px; text-align: center; position: relative; }
+  .sheet h3 { margin: 4px 0; font-size: 26px; color: var(--accent); }
+  .sheet .big svg { width: 82%; height: auto; }
+  .sheet .desc { color: #5d5443; line-height: 1.7; font-size: 15px; text-align: left; background: #faf5ea; border-radius: 14px; padding: 10px 12px; }
+  .pop { animation: pop .7s cubic-bezier(.2,1.6,.4,1) both; }
+  @keyframes pop { 0% { transform: scale(.1) rotate(-20deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  .wiggle svg { animation: wiggle 1.6s ease-in-out .7s infinite; }
+  @keyframes wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
+  .reveal svg { animation: reveal 1.2s ease-out both; }
+  @keyframes reveal { 0% { filter: brightness(0) opacity(.35); } 60% { filter: brightness(0) opacity(.35); } 100% { filter: none; } }
+
+  .confetti { position: fixed; top: -20px; width: 10px; height: 16px; z-index: 30; pointer-events: none; border-radius: 3px; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%); z-index: 40;
+    background: #3b3427; color: #fff; padding: 12px 18px; border-radius: 14px; font-size: 15px;
+    opacity: 0; pointer-events: none; transition: opacity .3s; max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; }
+
+  .gate input { font-size: 28px; width: 140px; text-align: center; padding: 8px; border: 3px solid var(--line); border-radius: 14px; -webkit-user-select: text; user-select: text; }
+
+  /* print sheet */
+  #printSheet { display: none; }
+  @media print {
+    @page { size: A4; margin: 10mm; }
+    body { background: #fff; }
+    header, nav, main, .overlay, .toast { display: none !important; }
+    #printSheet { display: block; }
+  }
+  .qr-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5mm; }
+  .qr-card {
+    border: 1mm dashed #bbb; border-radius: 6mm; padding: 3mm 4mm; display: flex; align-items: center; gap: 4mm;
+    break-inside: avoid; height: 46mm;
+  }
+  .qr-card .qr img, .qr-card .qr canvas { width: 36mm !important; height: 36mm !important; }
+  .qr-card .lbl { font-size: 14pt; font-weight: bold; color: #555; }
+  .qr-card .lbl small { display: block; font-size: 9pt; font-weight: normal; color: #888; margin-top: 2mm; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🦎 かくれっこ ずかん</h1>
+  <span class="count" id="countBadge">0 / 10</span>
+</header>
+
+<main>
+  <!-- さがす -->
+  <section class="view active" id="view-search">
+    <div class="hero" id="hero">
+      <div id="heroArt"></div>
+      <p>おうちの どこかに <b>かくれっこ</b> が<br>かくれているよ！ QRコードを みつけたら<br>カメラで よみこんでね。</p>
+    </div>
+    <div class="scanner" id="scanner">
+      <video id="video" playsinline muted></video>
+      <div class="frame"></div>
+      <div class="tip">QRコードを わくの なかに いれてね</div>
+    </div>
+    <div id="scanStartWrap">
+      <button class="big-btn" id="scanBtn">📷 カメラで さがす</button>
+    </div>
+    <div class="scan-actions" id="scanStopWrap" style="display:none">
+      <button class="btn gray" id="stopBtn">やめる</button>
+    </div>
+    <div class="progress">
+      <div>みつけた かずは <b id="progText">0ひき</b>　あと <b id="leftText">10ひき</b></div>
+      <div class="bar"><i id="progBar" style="width:0%"></i></div>
+    </div>
+  </section>
+
+  <!-- ずかん -->
+  <section class="view" id="view-zukan">
+    <div class="grid" id="zukanGrid"></div>
+  </section>
+
+  <!-- おうちのひと -->
+  <section class="view" id="view-parent">
+    <div id="gateBox" class="panel gate" style="text-align:center">
+      <h2>🔒 おうちのひと メニュー</h2>
+      <p>おうちのひと だけが ひらけるよ。こたえを いれてね。</p>
+      <p style="font-size:26px;font-weight:bold;color:var(--ink)" id="gateQ"></p>
+      <input id="gateA" type="number" inputmode="numeric">
+      <div style="margin-top:12px"><button class="btn" id="gateBtn">ひらく</button></div>
+    </div>
+    <div id="parentBox" style="display:none">
+      <div class="panel">
+        <h2>🖨️ QRコードを いんさつ</h2>
+        <p>10ぴき分のQRコードをA4用紙1枚に印刷します。切り取って家のあちこちに隠してください。カードにはキャラの絵は出ず、番号だけが入ります。</p>
+        <p style="font-size:13px" id="qrUrlNote"></p>
+        <button class="btn" id="printBtn">印刷する</button>
+      </div>
+      <div class="panel">
+        <h2>💡 ヒントを書く</h2>
+        <p>まだ見つかっていない子の図鑑に、ここで書いたヒントが出ます（例：「れいぞうこの ちかく…」）。入力すると自動で保存されます。</p>
+        <div id="hintList"></div>
+      </div>
+      <div class="panel">
+        <h2>🔄 さいしょから あそぶ</h2>
+        <p>図鑑を空にします。隠し場所を変えて、もう一度遊ぶときに使ってください。ヒントは残ります。</p>
+        <button class="btn red" id="resetBtn">ずかんを リセット</button>
+      </div>
+      <div class="panel">
+        <h2>📘 あそびかた</h2>
+        <p>① 上の「印刷する」でQRコードを印刷して、切り取ります。<br>
+           ② 子どもが見ていないうちに、家のあちこちに隠します。レア度★3の子（No.8〜10）は難しい場所がおすすめです。<br>
+           ③ 子どもは「さがす」でカメラを起動して、QRコードを読み込みます。<br>
+           ④ 見つけた子は「ずかん」に登録されます。10ぴき全部見つけたらコンプリート！</p>
+        <p>※ Androidの標準カメラアプリでQRを読んでも、このページが開いて登録されます。</p>
+      </div>
+      <div style="text-align:center"><button class="btn gray" id="lockBtn">メニューを とじる</button></div>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-view="search" class="active"><span class="ico">📷</span>さがす</button>
+  <button data-view="zukan"><span class="ico">📖</span>ずかん</button>
+  <button data-view="parent"><span class="ico">🔒</span>おうちのひと</button>
+</nav>
+
+<!-- 発見演出 -->
+<div class="overlay" id="foundOverlay">
+  <div class="sheet pop">
+    <div id="foundLabel" style="font-weight:bold;color:var(--sub)"></div>
+    <h3 id="foundTitle">みつけた！</h3>
+    <div class="big reveal" id="foundArt"></div>
+    <div style="font-size:24px;font-weight:bold" id="foundName"></div>
+    <div class="stars" id="foundStars" style="color:#f5b301;font-size:20px"></div>
+    <p class="desc" id="foundDesc"></p>
+    <button class="btn" id="foundClose" style="width:100%;font-size:19px">ずかんを みる</button>
+  </div>
+</div>
+
+<!-- 図鑑の詳細 / コンプリート -->
+<div class="overlay" id="detailOverlay">
+  <div class="sheet pop" id="detailSheet"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div id="printSheet">
+  <div style="text-align:center;font-size:16pt;font-weight:bold;margin-bottom:5mm">かくれっこ ずかん ― QRコード（切り取って隠してください）</div>
+  <div class="qr-grid" id="qrGrid"></div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ===== キャラクター（オリジナル） =====
+  // token は QR に入る合言葉。推測しにくい文字列にしてあります。
+  const CREATURES = [
+    { id: 1, token: 'mR7kQ2wz', name: 'モリモリ', rare: 1, c1: '#6cc46a', c2: '#2f8a3e', pat: 'leaf',
+      desc: 'はっぱの もようで しょくぶつに まぎれる。はちうえの かげが だいすき。' },
+    { id: 2, token: 'sK3pV9xe', name: 'ソラリン', rare: 1, c1: '#7cc8f2', c2: '#2f7fbf', pat: 'cloud',
+      desc: 'からだに くもが うかんでいる。まどの ちかくで そらを ながめるのが すき。' },
+    { id: 3, token: 'pH8nT4ra', name: 'ポカポカ', rare: 1, c1: '#ffb347', c2: '#e0782a', pat: 'sun',
+      desc: 'おひさまみたいに あったかい。ひなたぼっこ できる ばしょに いることが おおい。' },
+    { id: 4, token: 'dT5wL1mc', name: 'ドットン', rare: 1, c1: '#ff9ec4', c2: '#d9578f', pat: 'dot',
+      desc: 'みずたまもようの おしゃれさん。ぬいぐるみの なかまの ふりを するのが とくい。' },
+    { id: 5, token: 'zB2qF6hu', name: 'シマシマ', rare: 2, c1: '#f4f1ea', c2: '#3a3a3a', pat: 'stripe',
+      desc: 'しろと くろの しましま。ほんだなの すきまに はさまって かくれる。' },
+    { id: 6, token: 'mK9cJ3yo', name: 'モコモコ', rare: 2, c1: '#b98ee0', c2: '#7a4fb0', pat: 'fluffy',
+      desc: 'ふわふわの けで おおわれている。クッションや もうふの そばが おきにいり。' },
+    { id: 7, token: 'hN4vR8gs', name: 'ホシミ', rare: 2, c1: '#3d4f8f', c2: '#1f2a5c', pat: 'star',
+      desc: 'よぞらの いろを した からだに ほしが きらきら。くらい ところで ひかる。' },
+    { id: 8, token: 'nJ6xE2kd', name: 'ニジーノ', rare: 3, c1: '#ff6b6b', c2: '#7d5cd6', pat: 'rainbow',
+      desc: 'からだが にじいろに かわる めずらしい こ。めったに すがたを みせない。' },
+    { id: 9, token: 'kY1sW7pa', name: 'キラリ', rare: 3, c1: '#ffd84a', c2: '#c99400', pat: 'gold',
+      desc: 'きんいろに かがやく でんせつの かくれっこ。みつけると いいことが あるらしい。' },
+    { id: 10, token: 'sU3gM5tb', name: 'スケルン', rare: 3, c1: '#cdeffd', c2: '#7bbbd6', pat: 'clear',
+      desc: 'からだが すきとおっていて ほとんど みえない。いちばん かくれるのが じょうず。' },
+  ];
+  const TOTAL = CREATURES.length;
+
+  // ===== 保存 =====
+  const KEY = 'kakurekko.v1';
+  function load() {
+    try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.found) return { found: d.found, hints: d.hints || {} }; } catch (e) {}
+    return { found: {}, hints: {} };
+  }
+  let state = load();
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  const foundCount = () => CREATURES.filter(c => state.found[c.id]).length;
+
+  // ===== キャラの絵（SVG） =====
+  let uid = 0;
+  function star(cx, cy, r, fill) {
+    let p = '';
+    for (let i = 0; i < 10; i++) {
+      const a = Math.PI / 5 * i - Math.PI / 2, rr = i % 2 ? r * .45 : r;
+      p += (i ? 'L' : 'M') + (cx + Math.cos(a) * rr).toFixed(1) + ' ' + (cy + Math.sin(a) * rr).toFixed(1);
+    }
+    return `<path d="${p}Z" fill="${fill}"/>`;
+  }
+  function patternShapes(c) {
+    switch (c.pat) {
+      case 'leaf': return [[70,85,-30],[100,78,20],[125,100,-15],[88,108,40],[140,70,10],[150,95,-40]]
+        .map(([x,y,r]) => `<ellipse cx="${x}" cy="${y}" rx="11" ry="5" fill="${c.c2}" opacity=".55" transform="rotate(${r} ${x} ${y})"/>`).join('');
+      case 'cloud': return [[78,82],[118,104],[150,76]]
+        .map(([x,y]) => `<g fill="#fff" opacity=".9"><circle cx="${x}" cy="${y}" r="7"/><circle cx="${x+8}" cy="${y-4}" r="9"/><circle cx="${x+17}" cy="${y}" r="7"/></g>`).join('');
+      case 'sun': return [[80,88],[115,80],[135,105],[98,108],[152,78]]
+        .map(([x,y]) => `<circle cx="${x}" cy="${y}" r="6" fill="#fff6a8" opacity=".9"/><circle cx="${x}" cy="${y}" r="10" fill="none" stroke="#fff6a8" stroke-width="2" stroke-dasharray="3 3" opacity=".8"/>`).join('');
+      case 'dot': return [[70,80],[92,96],[112,74],[130,100],[150,82],[82,112],[118,118],[160,104]]
+        .map(([x,y]) => `<circle cx="${x}" cy="${y}" r="5.5" fill="#fff" opacity=".95"/>`).join('');
+      case 'stripe': return [56,74,92,110,128,146,164]
+        .map(x => `<rect x="${x}" y="40" width="9" height="100" fill="${c.c2}" transform="rotate(12 ${x} 90)"/>`).join('');
+      case 'star': return [[72,84,6],[96,100,5],[118,76,7],[138,104,5],[156,84,6],[86,114,4],[128,118,4]]
+        .map(([x,y,r]) => star(x, y, r, '#ffe46b')).join('');
+      case 'gold': return [[80,80,6],[120,96,8],[150,78,5],[100,112,5]]
+        .map(([x,y,r]) => star(x, y, r, '#fffbe0')).join('');
+      default: return '';
+    }
+  }
+  function creatureSVG(c, silhouette) {
+    const id = 'k' + (++uid);
+    const gray = '#b4aa96';
+    let defs = '';
+    let bodyFill = c.c1;
+    if (!silhouette && c.pat === 'rainbow') {
+      defs += `<linearGradient id="${id}g" x1="0" x2="1"><stop offset="0" stop-color="#ff6b6b"/><stop offset=".25" stop-color="#ffc145"/><stop offset=".5" stop-color="#7ed957"/><stop offset=".75" stop-color="#4fb6f0"/><stop offset="1" stop-color="#9d6bf0"/></linearGradient>`;
+      bodyFill = `url(#${id}g)`;
+    }
+    if (!silhouette && c.pat === 'gold') {
+      defs += `<radialGradient id="${id}g" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#fff3a0"/><stop offset=".6" stop-color="#ffd84a"/><stop offset="1" stop-color="#e3a800"/></radialGradient>`;
+      bodyFill = `url(#${id}g)`;
+    }
+    const f = silhouette ? gray : bodyFill;
+    const s = silhouette ? '#9d937e' : c.c2;
+    const tailColor = silhouette ? gray : (c.pat === 'rainbow' ? '#9d6bf0' : c.pat === 'gold' ? '#e3a800' : c.c1);
+    const fluffy = !silhouette && c.pat === 'fluffy' ? `stroke="${c.c2}" stroke-width="5" stroke-dasharray="2 6" stroke-linecap="round"` : '';
+    const clear = !silhouette && c.pat === 'clear' ? 'opacity=".55"' : '';
+    // からだ全体のかたち（クリップ用）
+    const bodyShape = `<ellipse cx="102" cy="96" rx="52" ry="34"/><ellipse cx="150" cy="74" rx="33" ry="28"/>`;
+    defs += `<clipPath id="${id}c">${bodyShape}</clipPath>`;
+    const face = silhouette
+      ? `<text x="150" y="86" text-anchor="middle" font-size="30" font-weight="bold" fill="#fff">？</text>`
+      : `<circle cx="157" cy="66" r="15" fill="${c.c2}"/>
+         <circle cx="158" cy="66" r="10.5" fill="#fff"/>
+         <circle cx="161" cy="67" r="5.5" fill="#2b2b2b"/>
+         <circle cx="163" cy="64.5" r="2" fill="#fff"/>
+         <circle cx="140" cy="86" r="5" fill="#ff8fa3" opacity=".6"/>
+         <path d="M166 86 Q174 92 181 84" fill="none" stroke="#3b3427" stroke-width="2.6" stroke-linecap="round"/>`;
+    return `<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${silhouette ? 'まだ みつけていない' : c.name}">
+      <defs>${defs}</defs>
+      <ellipse cx="105" cy="138" rx="62" ry="7" fill="#000" opacity=".08"/>
+      <g ${clear}>
+        <path d="M54 100 C 18 104, 12 62, 38 56 C 58 52, 64 78, 47 80 C 37 81, 36 70, 44 69" fill="none" stroke="${tailColor}" stroke-width="13" stroke-linecap="round"/>
+        <g fill="${silhouette ? gray : s}">
+          <rect x="68" y="116" width="12" height="20" rx="6"/><rect x="88" y="120" width="12" height="17" rx="6"/>
+          <rect x="112" y="120" width="12" height="17" rx="6"/><rect x="132" y="114" width="12" height="21" rx="6"/>
+        </g>
+        <path d="M128 52 L134 38 L141 49 L148 35 L155 47 L162 36 L166 50" fill="${silhouette ? gray : s}" stroke="${silhouette ? gray : s}" stroke-width="4" stroke-linejoin="round"/>
+        <g fill="${f}" ${fluffy}>${bodyShape}</g>
+        ${silhouette ? '' : `<g clip-path="url(#${id}c)">${patternShapes(c)}</g>`}
+        <path d="M70 116 Q102 126 136 112" fill="none" stroke="#fff" stroke-width="3" opacity="${silhouette ? 0 : .35}" stroke-linecap="round"/>
+        ${face}
+      </g>
+    </svg>`;
+  }
+  const stars = n => '★'.repeat(n) + '☆'.repeat(3 - n);
+
+  // ===== 画面 =====
+  const $ = s => document.querySelector(s);
+  function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+    document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    if (name !== 'search') stopScan();
+    if (name === 'zukan') renderZukan();
+    if (name === 'parent') renderParent();
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
+
+  function renderCount() {
+    const n = foundCount();
+    $('#countBadge').textContent = `${n} / ${TOTAL}`;
+    $('#progText').textContent = `${n}ひき`;
+    $('#leftText').textContent = `${TOTAL - n}ひき`;
+    $('#progBar').style.width = (n / TOTAL * 100) + '%';
+  }
+
+  function renderZukan() {
+    $('#zukanGrid').innerHTML = CREATURES.map(c => {
+      const got = !!state.found[c.id];
+      const hint = (state.hints[c.id] || '').trim();
+      return `<button class="card ${got ? '' : 'unfound'}" data-id="${c.id}">
+        <span class="no">No.${c.id}</span>
+        ${creatureSVG(c, !got)}
+        <div class="name">${got ? c.name : '？？？'}</div>
+        <div class="stars">${stars(c.rare)}</div>
+        ${!got && hint ? '<span class="hint-tag">💡 ヒントあり</span>' : ''}
+      </button>`;
+    }).join('');
+    $('#zukanGrid').querySelectorAll('.card').forEach(el =>
+      el.addEventListener('click', () => openDetail(CREATURES.find(c => c.id === +el.dataset.id))));
+  }
+
+  function openDetail(c) {
+    const got = state.found[c.id];
+    const hint = (state.hints[c.id] || '').trim();
+    $('#detailSheet').innerHTML = got
+      ? `<div style="font-weight:bold;color:var(--sub)">No.${c.id}</div>
+         <div class="big wiggle">${creatureSVG(c, false)}</div>
+         <div style="font-size:24px;font-weight:bold">${c.name}</div>
+         <div style="color:#f5b301;font-size:20px">${stars(c.rare)}</div>
+         <p class="desc">${c.desc}</p>
+         <p style="color:var(--sub);font-size:14px">みつけた日：${fmtDate(got)}</p>
+         <button class="btn" style="width:100%" data-close>とじる</button>`
+      : `<div style="font-weight:bold;color:var(--sub)">No.${c.id}</div>
+         <div class="big">${creatureSVG(c, true)}</div>
+         <div style="font-size:24px;font-weight:bold;color:#a99f8a">？？？</div>
+         <div style="color:#f5b301;font-size:20px">${stars(c.rare)}</div>
+         <p class="desc">${hint ? '💡 ヒント：' + esc(hint) : 'まだ みつけていないよ。どこに かくれているかな？'}</p>
+         <button class="btn" style="width:100%" data-close>とじる</button>`;
+    $('#detailOverlay').classList.add('show');
+    $('#detailSheet').querySelector('[data-close]').addEventListener('click', closeDetail);
+  }
+  function closeDetail() { $('#detailOverlay').classList.remove('show'); }
+  $('#detailOverlay').addEventListener('click', e => { if (e.target.id === 'detailOverlay') closeDetail(); });
+
+  function fmtDate(t) {
+    const d = new Date(t);
+    return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+  const esc = s => s.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
+  function toast(msg) {
+    const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  // ===== 音と紙ふぶき =====
+  let ac;
+  function chime(notes) {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      notes.forEach(([freq, t, dur]) => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = 'triangle'; o.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, ac.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.25, ac.currentTime + t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + t + dur);
+        o.connect(g).connect(ac.destination); o.start(ac.currentTime + t); o.stop(ac.currentTime + t + dur + .05);
+      });
+    } catch (e) {}
+  }
+  const FOUND_SOUND = [[523, 0, .15], [659, .12, .15], [784, .24, .15], [1047, .36, .4]];
+  const COMPLETE_SOUND = [[523, 0, .2], [523, .2, .2], [523, .4, .2], [659, .6, .5], [587, 1.1, .2], [659, 1.3, .2], [784, 1.5, .8]];
+  function confetti(n) {
+    const colors = ['#ff6b6b', '#ffc145', '#7ed957', '#4fb6f0', '#9d6bf0', '#ff9ec4'];
+    for (let i = 0; i < n; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.background = colors[i % colors.length];
+      el.style.animationDuration = (1.8 + Math.random() * 1.8) + 's';
+      el.style.animationDelay = (Math.random() * .6) + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4500);
+    }
+  }
+
+  // ===== はっけん！ =====
+  let pendingComplete = false;
+  function handleCode(text) {
+    const m = String(text).match(/found=([A-Za-z0-9]+)/);
+    const token = m ? m[1] : String(text).trim();
+    const c = CREATURES.find(x => x.token === token);
+    if (!c) { toast('このQRコードは かくれっこ じゃないみたい…'); return false; }
+    const isNew = !state.found[c.id];
+    if (isNew) { state.found[c.id] = Date.now(); save(); }
+    $('#foundLabel').textContent = `No.${c.id}`;
+    $('#foundTitle').textContent = isNew ? 'みつけた！' : 'また あえたね！';
+    $('#foundArt').innerHTML = creatureSVG(c, false);
+    $('#foundArt').className = 'big ' + (isNew ? 'reveal' : 'wiggle');
+    $('#foundName').textContent = c.name;
+    $('#foundStars').textContent = stars(c.rare);
+    $('#foundDesc').textContent = isNew ? c.desc : 'この こは もう ずかんに のっているよ。';
+    const sheet = $('#foundOverlay .sheet');
+    sheet.classList.remove('pop'); void sheet.offsetWidth; sheet.classList.add('pop');
+    $('#foundOverlay').classList.add('show');
+    if (isNew) { chime(FOUND_SOUND); confetti(40 + c.rare * 20); if (navigator.vibrate) navigator.vibrate([80, 60, 160]); }
+    else chime([[784, 0, .15], [1047, .12, .3]]);
+    pendingComplete = isNew && foundCount() === TOTAL;
+    renderCount();
+    return true;
+  }
+  $('#foundClose').addEventListener('click', () => {
+    $('#foundOverlay').classList.remove('show');
+    if (pendingComplete) { pendingComplete = false; showComplete(); }
+    else showView('zukan');
+  });
+
+  function showComplete() {
+    showView('zukan');
+    const art = CREATURES.slice(0, 3).map(c => `<div style="width:30%;display:inline-block">${creatureSVG(c, false)}</div>`).join('');
+    $('#detailSheet').innerHTML = `
+      <div style="font-size:40px">🏆</div>
+      <h3>コンプリート！</h3>
+      <p style="font-weight:bold;font-size:18px">${TOTAL}ぴき ぜんぶ みつけたよ！<br>かくれっこ はかせ だね！</p>
+      <div class="wiggle">${art}</div>
+      <button class="btn" style="width:100%;margin-top:10px" data-close>やったー！</button>`;
+    $('#detailOverlay').classList.add('show');
+    $('#detailSheet').querySelector('[data-close]').addEventListener('click', closeDetail);
+    chime(COMPLETE_SOUND); confetti(160);
+    if (navigator.vibrate) navigator.vibrate([100, 80, 100, 80, 300]);
+  }
+
+  // ===== カメラでQR読み取り =====
+  const video = $('#video');
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  let stream = null, raf = 0, detector = null, busy = false;
+  if ('BarcodeDetector' in window) { try { detector = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) {} }
+
+  async function startScan() {
+    chime([[1, 0, .01]]); // スマホで音を出せるように、タップ時に音声を準備
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast('この ブラウザでは カメラが つかえません（https のページで ひらいてね）'); return;
+    }
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    } catch (e) {
+      toast('カメラを つかう きょかが ひつようです'); return;
+    }
+    video.srcObject = stream;
+    await video.play().catch(() => {});
+    $('#hero').style.display = 'none';
+    $('#scanner').classList.add('on');
+    $('#scanStartWrap').style.display = 'none';
+    $('#scanStopWrap').style.display = 'block';
+    tick();
+  }
+  function stopScan() {
+    cancelAnimationFrame(raf); raf = 0;
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    video.srcObject = null;
+    $('#hero').style.display = '';
+    $('#scanner').classList.remove('on');
+    $('#scanStartWrap').style.display = '';
+    $('#scanStopWrap').style.display = 'none';
+  }
+  async function tick() {
+    if (!stream) return;
+    if (!busy && video.readyState >= 2) {
+      busy = true;
+      let text = null;
+      try {
+        if (detector) {
+          const codes = await detector.detect(video);
+          if (codes.length) text = codes[0].rawValue;
+        } else if (window.jsQR) {
+          const w = 480, h = Math.round(video.videoHeight / video.videoWidth * w) || 360;
+          canvas.width = w; canvas.height = h;
+          ctx.drawImage(video, 0, 0, w, h);
+          const r = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' });
+          if (r) text = r.data;
+        }
+      } catch (e) {
+        detector = null; // うまく動かなければ jsQR に切り替え
+      }
+      busy = false;
+      if (text) {
+        if (handleCode(text)) { stopScan(); return; }
+        await new Promise(r => setTimeout(r, 1500)); // 関係ないQRなら少し待って再開
+      }
+    }
+    raf = requestAnimationFrame(tick);
+  }
+  $('#scanBtn').addEventListener('click', startScan);
+  $('#stopBtn').addEventListener('click', stopScan);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopScan(); });
+
+  // ===== おうちのひと =====
+  let unlocked = false, gateAns = 0;
+  function newGate() {
+    const a = 11 + Math.floor(Math.random() * 30), b = 12 + Math.floor(Math.random() * 30);
+    gateAns = a + b; $('#gateQ').textContent = `${a} ＋ ${b} ＝ ？`; $('#gateA').value = '';
+  }
+  function renderParent() {
+    $('#gateBox').style.display = unlocked ? 'none' : '';
+    $('#parentBox').style.display = unlocked ? '' : 'none';
+    if (!unlocked) { newGate(); return; }
+    $('#qrUrlNote').textContent = 'QRコードの中身：' + baseUrl() + '#found=…' +
+      (location.protocol === 'https:' ? '' : '　※ いまは https ではありません。GitHub Pages で開いてから印刷してください。');
+    $('#hintList').innerHTML = CREATURES.map(c => `
+      <div class="hint-row">
+        ${creatureSVG(c, false)}
+        <div><label>No.${c.id} ${c.name} ${stars(c.rare)}${state.found[c.id] ? '（みつけた）' : ''}</label>
+        <input data-id="${c.id}" placeholder="ヒントを書く" value="${esc(state.hints[c.id] || '')}"></div>
+      </div>`).join('');
+    $('#hintList').querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => {
+      state.hints[inp.dataset.id] = inp.value; save();
+    }));
+  }
+  $('#gateBtn').addEventListener('click', () => {
+    if (+$('#gateA').value === gateAns) { unlocked = true; renderParent(); }
+    else { toast('ちがうみたい'); newGate(); }
+  });
+  $('#gateA').addEventListener('keydown', e => { if (e.key === 'Enter') $('#gateBtn').click(); });
+  $('#lockBtn').addEventListener('click', () => { unlocked = false; renderParent(); });
+  $('#resetBtn').addEventListener('click', () => {
+    if (confirm('図鑑を空にしますか？（見つけた記録が消えます）')) {
+      state.found = {}; save(); renderCount(); toast('ずかんを リセットしました');
+    }
+  });
+
+  function baseUrl() { return location.origin + location.pathname; }
+  function buildPrintSheet() {
+    const grid = $('#qrGrid'); grid.innerHTML = '';
+    CREATURES.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'qr-card';
+      const q = document.createElement('div'); q.className = 'qr';
+      const lbl = document.createElement('div'); lbl.className = 'lbl';
+      lbl.innerHTML = `No.${c.id}<br>${stars(c.rare)}<small>かくれっこ ずかん</small>`;
+      card.append(q, lbl); grid.appendChild(card);
+      new QRCode(q, { text: baseUrl() + '#found=' + c.token, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.M });
+    });
+  }
+  $('#printBtn').addEventListener('click', () => {
+    if (!window.QRCode) { toast('QRコードの じゅんびが できませんでした。ネットに つないでね'); return; }
+    buildPrintSheet();
+    setTimeout(() => window.print(), 400);
+  });
+
+  // ===== スマホ標準カメラで読んだとき（URLに #found=… が付いて開く） =====
+  function checkHash() {
+    if (/found=/.test(location.hash)) {
+      const h = location.hash;
+      history.replaceState(null, '', baseUrl());
+      handleCode(h);
+    }
+  }
+  window.addEventListener('hashchange', checkHash);
+
+  // ===== はじめ =====
+  $('#heroArt').innerHTML = creatureSVG(CREATURES[0], false);
+  renderCount();
+  checkHash();
+})();
+</script>
+</body>
+</html>
