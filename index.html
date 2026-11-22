@@ -64,12 +64,14 @@
   }
   .big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #d46a22; }
   .btn {
-    border: 0; border-radius: 14px; background: var(--main); color: #fff; font-weight: bold;
-    padding: 12px 18px; box-shadow: 0 4px 0 var(--main-dark);
+    display: inline-block; border: 0; border-radius: 14px; background: var(--main); color: #fff; font-weight: bold;
+    padding: 12px 18px; box-shadow: 0 4px 0 var(--main-dark); text-align: center;
   }
   .btn.gray { background: #b9ae98; box-shadow: 0 4px 0 #938871; }
   .btn.red { background: #e2574c; box-shadow: 0 4px 0 #b23b32; }
+  .btn.orange { background: var(--accent); box-shadow: 0 4px 0 #d46a22; }
   .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.2); }
+  .btn.small { padding: 8px 12px; font-size: 14px; }
 
   .hero { text-align: center; padding: 8px 0 18px; }
   .hero svg { width: 220px; height: auto; }
@@ -93,27 +95,41 @@
   .bar { height: 16px; background: #efe6d2; border-radius: 999px; overflow: hidden; margin-top: 8px; }
   .bar i { display: block; height: 100%; background: linear-gradient(90deg, #6fd39a, var(--main)); border-radius: 999px; transition: width .6s; }
 
+  /* キャラの絵（SVG / 取り込んだ絵 共通） */
+  .art { position: relative; width: 100%; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; }
+  .art svg { width: 100%; height: auto; }
+  .art img { max-width: 92%; max-height: 92%; object-fit: contain; display: block; }
+  .art.sil img { filter: brightness(0) opacity(.22); }
+  .art .q { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: bold; color: #fff; text-shadow: 0 0 6px rgba(0,0,0,.3); }
+
+  .section-title { margin: 22px 0 10px; font-size: 17px; color: var(--main-dark); }
+  .section-title:first-child { margin-top: 0; }
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   @media (min-width: 560px) { .grid { grid-template-columns: repeat(3, 1fr); } }
   .card {
     background: var(--card); border: 0; border-radius: 18px; padding: 10px 8px 12px; text-align: center;
     box-shadow: var(--shadow); position: relative;
   }
-  .card svg { width: 100%; height: auto; }
-  .card .no { position: absolute; left: 10px; top: 8px; font-size: 12px; color: var(--sub); font-weight: bold; }
+  .card .no { position: absolute; left: 10px; top: 8px; font-size: 12px; color: var(--sub); font-weight: bold; z-index: 1; }
   .card .name { font-weight: bold; font-size: 16px; }
   .card .stars { color: #f5b301; font-size: 13px; letter-spacing: 1px; }
   .card.unfound { background: #f1ebdd; }
   .card.unfound .name { color: #a99f8a; }
+  .card.drawn { background: #fffdf6; }
+  .card.drawn::after { content: '🖍️'; position: absolute; right: 8px; top: 6px; font-size: 14px; }
   .hint-tag { display: inline-block; margin-top: 4px; font-size: 12px; background: #fff3c4; color: #8a6d00; padding: 2px 8px; border-radius: 999px; }
 
   .panel { background: var(--card); border-radius: 18px; padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px; }
   .panel h2 { margin: 0 0 8px; font-size: 18px; }
   .panel p { margin: 6px 0; line-height: 1.7; color: #5d5443; font-size: 15px; }
+  .row-list > div { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px dashed var(--line); }
   .hint-row { display: grid; grid-template-columns: 56px 1fr; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px dashed var(--line); }
-  .hint-row svg { width: 56px; height: auto; }
   .hint-row input { width: 100%; padding: 10px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-size: 15px; -webkit-user-select: text; user-select: text; }
-  .hint-row label { font-size: 13px; color: var(--sub); font-weight: bold; }
+  .hint-row label, .row-list label { font-size: 13px; color: var(--sub); font-weight: bold; }
+  .chk { display: flex; gap: 8px; align-items: center; font-size: 15px; margin: 8px 0; }
+  .chk input { width: 22px; height: 22px; accent-color: var(--main); }
+  .radio-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
+  .radio-row label { display: flex; align-items: center; gap: 6px; background: #faf5ea; border-radius: 10px; padding: 8px 10px; font-size: 14px; }
 
   /* overlays */
   .overlay {
@@ -121,16 +137,38 @@
     background: rgba(40,32,20,.72); padding: 20px;
   }
   .overlay.show { display: flex; }
-  .sheet { background: #fff; border-radius: 26px; padding: 20px; width: 100%; max-width: 420px; text-align: center; position: relative; }
+  .sheet { background: #fff; border-radius: 26px; padding: 20px; width: 100%; max-width: 420px; text-align: center; position: relative; max-height: 92vh; overflow-y: auto; }
   .sheet h3 { margin: 4px 0; font-size: 26px; color: var(--accent); }
-  .sheet .big svg { width: 82%; height: auto; }
+  .sheet .big .art { width: 82%; margin: 0 auto; }
   .sheet .desc { color: #5d5443; line-height: 1.7; font-size: 15px; text-align: left; background: #faf5ea; border-radius: 14px; padding: 10px 12px; }
   .pop { animation: pop .7s cubic-bezier(.2,1.6,.4,1) both; }
   @keyframes pop { 0% { transform: scale(.1) rotate(-20deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
-  .wiggle svg { animation: wiggle 1.6s ease-in-out .7s infinite; }
+  .wiggle .art { animation: wiggle 1.6s ease-in-out .7s infinite; }
   @keyframes wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
-  .reveal svg { animation: reveal 1.2s ease-out both; }
+  .reveal .art svg, .reveal .art img { animation: reveal 1.2s ease-out both; }
   @keyframes reveal { 0% { filter: brightness(0) opacity(.35); } 60% { filter: brightness(0) opacity(.35); } 100% { filter: none; } }
+
+  /* 絵の取り込み */
+  .editor { text-align: left; }
+  .editor h3 { text-align: center; color: var(--main-dark); font-size: 22px; }
+  .checker {
+    margin: 12px 0; min-height: 190px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    background: repeating-conic-gradient(#ece6d8 0 25%, #fff 0 50%) 0 0 / 18px 18px; border: 2px solid var(--line);
+    color: var(--sub); font-size: 14px; padding: 8px; text-align: center;
+  }
+  .checker canvas, .checker img { max-width: 100%; max-height: 260px; display: block; }
+  .field { margin: 12px 0; }
+  .field > label { display: block; font-size: 13px; font-weight: bold; color: var(--sub); margin-bottom: 4px; }
+  .field input[type=text], .field textarea {
+    width: 100%; padding: 10px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-size: 16px;
+    -webkit-user-select: text; user-select: text; resize: vertical;
+  }
+  .field input[type=range] { width: 100%; accent-color: var(--main); }
+  .rare-pick { display: flex; gap: 8px; }
+  .rare-pick button { flex: 1; border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 8px 0; color: #f5b301; font-size: 16px; }
+  .rare-pick button.on { background: #fff3c4; border-color: #f5b301; }
+  .edit-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .edit-actions .wide { grid-column: 1 / -1; }
 
   .confetti { position: fixed; top: -20px; width: 10px; height: 16px; z-index: 30; pointer-events: none; border-radius: 3px; animation: fall linear forwards; }
   @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
@@ -152,6 +190,9 @@
     header, nav, main, .overlay, .toast { display: none !important; }
     #printSheet { display: block; }
   }
+  .print-page { break-after: page; }
+  .print-page:last-child { break-after: auto; }
+  .print-title { text-align: center; font-size: 16pt; font-weight: bold; margin-bottom: 5mm; }
   .qr-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5mm; }
   .qr-card {
     border: 1mm dashed #bbb; border-radius: 6mm; padding: 3mm 4mm; display: flex; align-items: center; gap: 4mm;
@@ -195,7 +236,7 @@
 
   <!-- ずかん -->
   <section class="view" id="view-zukan">
-    <div class="grid" id="zukanGrid"></div>
+    <div id="zukanBody"></div>
   </section>
 
   <!-- おうちのひと -->
@@ -209,8 +250,24 @@
     </div>
     <div id="parentBox" style="display:none">
       <div class="panel">
+        <h2>🖍️ 絵から かくれっこを つくる</h2>
+        <p>お子さんが描いた絵を撮影すると、白い紙の部分を自動で透明にして、図鑑のキャラクターにします。</p>
+        <p style="font-size:13px">コツ：白い紙に、濃いめの色でくっきり描くときれいに切り抜けます。明るい場所で、影が入らないように真上から撮ってください。</p>
+        <button class="btn orange" id="newDrawBtn">＋ あたらしく つくる</button>
+        <div class="row-list" id="customList" style="margin-top:10px"></div>
+      </div>
+      <div class="panel">
+        <h2>🎮 あそぶ キャラクター</h2>
+        <label class="chk"><input type="checkbox" id="useOriginals"> さいしょの10ぴき（モリモリ〜スケルン）も いっしょに あそぶ</label>
+        <p style="font-size:13px">オフにすると、絵から作ったキャラクターだけで遊べます（図鑑の数やコンプリートも、その子たちだけで数えます）。</p>
+      </div>
+      <div class="panel">
         <h2>🖨️ QRコードを いんさつ</h2>
-        <p>10ぴき分のQRコードをA4用紙1枚に印刷します。切り取って家のあちこちに隠してください。カードにはキャラの絵は出ず、番号だけが入ります。</p>
+        <p>A4用紙1枚に10ぴき分ずつ並びます。切り取って家のあちこちに隠してください。カードにはキャラの絵は出ず、番号だけが入ります。</p>
+        <div class="radio-row" id="printPick">
+          <label><input type="radio" name="printWhat" value="active" checked> あそぶ キャラ ぜんぶ</label>
+          <label><input type="radio" name="printWhat" value="custom"> 絵から作った キャラだけ</label>
+        </div>
         <p style="font-size:13px" id="qrUrlNote"></p>
         <button class="btn" id="printBtn">印刷する</button>
       </div>
@@ -221,16 +278,24 @@
       </div>
       <div class="panel">
         <h2>🔄 さいしょから あそぶ</h2>
-        <p>図鑑を空にします。隠し場所を変えて、もう一度遊ぶときに使ってください。ヒントは残ります。</p>
+        <p>図鑑を空にします。隠し場所を変えて、もう一度遊ぶときに使ってください。ヒントと、絵から作ったキャラクターは残ります。</p>
         <button class="btn red" id="resetBtn">ずかんを リセット</button>
+      </div>
+      <div class="panel">
+        <h2>💾 バックアップ</h2>
+        <p>絵から作ったキャラクターとヒントは<b>このスマホの中だけ</b>に保存されています。ブラウザのデータを消すと消えてしまうので、ときどきファイルに保存しておくと安心です。機種変更のときも、このファイルで引っ越せます。</p>
+        <button class="btn" id="exportBtn">ファイルに保存</button>
+        <label class="btn gray" for="importIn" style="margin-left:6px">ファイルから読み込む</label>
+        <input type="file" id="importIn" accept="application/json,.json" hidden>
       </div>
       <div class="panel">
         <h2>📘 あそびかた</h2>
         <p>① 上の「印刷する」でQRコードを印刷して、切り取ります。<br>
-           ② 子どもが見ていないうちに、家のあちこちに隠します。レア度★3の子（No.8〜10）は難しい場所がおすすめです。<br>
+           ② 子どもが見ていないうちに、家のあちこちに隠します。レア度★3の子は難しい場所がおすすめです。<br>
            ③ 子どもは「さがす」でカメラを起動して、QRコードを読み込みます。<br>
-           ④ 見つけた子は「ずかん」に登録されます。10ぴき全部見つけたらコンプリート！</p>
-        <p>※ Androidの標準カメラアプリでQRを読んでも、このページが開いて登録されます。</p>
+           ④ 見つけた子は「ずかん」に登録されます。全部見つけたらコンプリート！</p>
+        <p>※ Androidの標準カメラアプリでQRを読んでも、このページが開いて登録されます。<br>
+           ※ 絵から作ったキャラクターは、作ったスマホでだけ見つけられます。</p>
       </div>
       <div style="text-align:center"><button class="btn gray" id="lockBtn">メニューを とじる</button></div>
     </div>
@@ -261,12 +326,39 @@
   <div class="sheet pop" id="detailSheet"></div>
 </div>
 
+<!-- 絵の取り込み -->
+<div class="overlay" id="editOverlay">
+  <div class="sheet editor">
+    <h3 id="editTitle">🖍️ 絵から つくる</h3>
+    <label class="btn orange" for="fileIn" style="display:block">📷 絵を 撮る・えらぶ</label>
+    <input type="file" id="fileIn" accept="image/*" hidden>
+    <div class="checker" id="editPreview">ここに 絵が 出ます</div>
+    <div id="procTools" style="display:none">
+      <label class="chk"><input type="checkbox" id="optWhite" checked> 白い紙の部分を 透明にする</label>
+      <div class="field" id="strengthField">
+        <label>白を消す強さ（絵が消えすぎたら左へ、紙が残ったら右へ）</label>
+        <input type="range" id="optStrength" min="0" max="100" value="50">
+      </div>
+      <button class="btn gray small" id="rotBtn">↻ 90° 回す</button>
+    </div>
+    <div class="field"><label>なまえ</label><input type="text" id="edName" maxlength="12" placeholder="例：ふわりん"></div>
+    <div class="field"><label>レアど</label>
+      <div class="rare-pick" id="rarePick">
+        <button data-r="1">★</button><button data-r="2">★★</button><button data-r="3">★★★</button>
+      </div>
+    </div>
+    <div class="field"><label>せつめい（ずかんに 出ます）</label><textarea id="edDesc" rows="3" maxlength="80" placeholder="例：あまい においが すき。ソファの したに よく いる。"></textarea></div>
+    <div class="edit-actions">
+      <button class="btn wide" id="edSave">ずかんに のせる</button>
+      <button class="btn gray" id="edCancel">やめる</button>
+      <button class="btn red" id="edDelete">けす</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
-<div id="printSheet">
-  <div style="text-align:center;font-size:16pt;font-weight:bold;margin-bottom:5mm">かくれっこ ずかん ― QRコード（切り取って隠してください）</div>
-  <div class="qr-grid" id="qrGrid"></div>
-</div>
+<div id="printSheet"></div>
 
 <script>
 (() => {
@@ -274,7 +366,7 @@
 
   // ===== キャラクター（オリジナル） =====
   // token は QR に入る合言葉。推測しにくい文字列にしてあります。
-  const CREATURES = [
+  const ORIGINALS = [
     { id: 1, token: 'mR7kQ2wz', name: 'モリモリ', rare: 1, c1: '#6cc46a', c2: '#2f8a3e', pat: 'leaf',
       desc: 'はっぱの もようで しょくぶつに まぎれる。はちうえの かげが だいすき。' },
     { id: 2, token: 'sK3pV9xe', name: 'ソラリン', rare: 1, c1: '#7cc8f2', c2: '#2f7fbf', pat: 'cloud',
@@ -296,17 +388,42 @@
     { id: 10, token: 'sU3gM5tb', name: 'スケルン', rare: 3, c1: '#cdeffd', c2: '#7bbbd6', pat: 'clear',
       desc: 'からだが すきとおっていて ほとんど みえない。いちばん かくれるのが じょうず。' },
   ];
-  const TOTAL = CREATURES.length;
+  ORIGINALS.forEach(c => { c.no = c.id; });
 
   // ===== 保存 =====
+  // 図鑑・ヒント・設定 と、絵（大きい）は別々に保存します。
   const KEY = 'kakurekko.v1';
+  const CKEY = 'kakurekko.custom.v1';
   function load() {
-    try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.found) return { found: d.found, hints: d.hints || {} }; } catch (e) {}
-    return { found: {}, hints: {} };
+    const s = { found: {}, hints: {}, useOriginals: true };
+    try {
+      const d = JSON.parse(localStorage.getItem(KEY));
+      if (d) { s.found = d.found || {}; s.hints = d.hints || {}; if (d.useOriginals === false) s.useOriginals = false; }
+    } catch (e) {}
+    return s;
+  }
+  function loadCustom() {
+    try { const a = JSON.parse(localStorage.getItem(CKEY)); if (Array.isArray(a)) return a; } catch (e) {}
+    return [];
   }
   let state = load();
+  let custom = loadCustom(); // [{ id:'u…', token, name, rare, desc, img(dataURL), created }]
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
-  const foundCount = () => CREATURES.filter(c => state.found[c.id]).length;
+  function saveCustom() {
+    try { localStorage.setItem(CKEY, JSON.stringify(custom)); return true; }
+    catch (e) { toast('ほぞんできる りょうが いっぱいです。いらない絵を けしてください'); return false; }
+  }
+
+  function allCreatures() {
+    return ORIGINALS.concat(custom.map((c, i) => Object.assign({}, c, { no: ORIGINALS.length + i + 1 })));
+  }
+  function activeCreatures() {
+    const all = allCreatures();
+    const list = all.filter(c => !c.img ? state.useOriginals : true);
+    return list.length ? list : ORIGINALS; // 何もなければ最初の10ぴき
+  }
+  const findById = id => allCreatures().find(c => String(c.id) === String(id));
+  const foundCount = list => list.filter(c => state.found[c.id]).length;
 
   // ===== キャラの絵（SVG） =====
   let uid = 0;
@@ -355,7 +472,6 @@
     const tailColor = silhouette ? gray : (c.pat === 'rainbow' ? '#9d6bf0' : c.pat === 'gold' ? '#e3a800' : c.c1);
     const fluffy = !silhouette && c.pat === 'fluffy' ? `stroke="${c.c2}" stroke-width="5" stroke-dasharray="2 6" stroke-linecap="round"` : '';
     const clear = !silhouette && c.pat === 'clear' ? 'opacity=".55"' : '';
-    // からだ全体のかたち（クリップ用）
     const bodyShape = `<ellipse cx="102" cy="96" rx="52" ry="34"/><ellipse cx="150" cy="74" rx="33" ry="28"/>`;
     defs += `<clipPath id="${id}c">${bodyShape}</clipPath>`;
     const face = silhouette
@@ -383,7 +499,15 @@
       </g>
     </svg>`;
   }
+  // SVG でも 取り込んだ絵でも、同じ大きさの枠に入れて返す
+  function art(c, silhouette) {
+    if (c.img) {
+      return `<div class="art ${silhouette ? 'sil' : ''}"><img src="${c.img}" alt="${silhouette ? 'まだ みつけていない' : esc(c.name)}">${silhouette ? '<span class="q">？</span>' : ''}</div>`;
+    }
+    return `<div class="art">${creatureSVG(c, silhouette)}</div>`;
+  }
   const stars = n => '★'.repeat(n) + '☆'.repeat(3 - n);
+  const descOf = c => c.desc || 'おうちで うまれた かくれっこ。';
 
   // ===== 画面 =====
   const $ = s => document.querySelector(s);
@@ -398,42 +522,48 @@
   document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
 
   function renderCount() {
-    const n = foundCount();
-    $('#countBadge').textContent = `${n} / ${TOTAL}`;
+    const list = activeCreatures(), n = foundCount(list), total = list.length;
+    $('#countBadge').textContent = `${n} / ${total}`;
     $('#progText').textContent = `${n}ひき`;
-    $('#leftText').textContent = `${TOTAL - n}ひき`;
-    $('#progBar').style.width = (n / TOTAL * 100) + '%';
+    $('#leftText').textContent = `${total - n}ひき`;
+    $('#progBar').style.width = (n / total * 100) + '%';
   }
 
+  function cardHTML(c) {
+    const got = !!state.found[c.id];
+    const hint = (state.hints[c.id] || '').trim();
+    return `<button class="card ${got ? '' : 'unfound'} ${c.img ? 'drawn' : ''}" data-id="${c.id}">
+      <span class="no">No.${c.no}</span>
+      ${art(c, !got)}
+      <div class="name">${got ? esc(c.name) : '？？？'}</div>
+      <div class="stars">${stars(c.rare)}</div>
+      ${!got && hint ? '<span class="hint-tag">💡 ヒントあり</span>' : ''}
+    </button>`;
+  }
   function renderZukan() {
-    $('#zukanGrid').innerHTML = CREATURES.map(c => {
-      const got = !!state.found[c.id];
-      const hint = (state.hints[c.id] || '').trim();
-      return `<button class="card ${got ? '' : 'unfound'}" data-id="${c.id}">
-        <span class="no">No.${c.id}</span>
-        ${creatureSVG(c, !got)}
-        <div class="name">${got ? c.name : '？？？'}</div>
-        <div class="stars">${stars(c.rare)}</div>
-        ${!got && hint ? '<span class="hint-tag">💡 ヒントあり</span>' : ''}
-      </button>`;
-    }).join('');
-    $('#zukanGrid').querySelectorAll('.card').forEach(el =>
-      el.addEventListener('click', () => openDetail(CREATURES.find(c => c.id === +el.dataset.id))));
+    const list = activeCreatures();
+    const orig = list.filter(c => !c.img), drawn = list.filter(c => c.img);
+    let html = '';
+    if (orig.length) html += (drawn.length ? '<h2 class="section-title">かくれっこ</h2>' : '') + `<div class="grid">${orig.map(cardHTML).join('')}</div>`;
+    if (drawn.length) html += '<h2 class="section-title">🖍️ おうちで うまれた かくれっこ</h2>' + `<div class="grid">${drawn.map(cardHTML).join('')}</div>`;
+    $('#zukanBody').innerHTML = html;
+    $('#zukanBody').querySelectorAll('.card').forEach(el =>
+      el.addEventListener('click', () => openDetail(findById(el.dataset.id))));
   }
 
   function openDetail(c) {
     const got = state.found[c.id];
     const hint = (state.hints[c.id] || '').trim();
     $('#detailSheet').innerHTML = got
-      ? `<div style="font-weight:bold;color:var(--sub)">No.${c.id}</div>
-         <div class="big wiggle">${creatureSVG(c, false)}</div>
-         <div style="font-size:24px;font-weight:bold">${c.name}</div>
+      ? `<div style="font-weight:bold;color:var(--sub)">No.${c.no}</div>
+         <div class="big wiggle">${art(c, false)}</div>
+         <div style="font-size:24px;font-weight:bold">${esc(c.name)}</div>
          <div style="color:#f5b301;font-size:20px">${stars(c.rare)}</div>
-         <p class="desc">${c.desc}</p>
+         <p class="desc">${esc(descOf(c))}</p>
          <p style="color:var(--sub);font-size:14px">みつけた日：${fmtDate(got)}</p>
          <button class="btn" style="width:100%" data-close>とじる</button>`
-      : `<div style="font-weight:bold;color:var(--sub)">No.${c.id}</div>
-         <div class="big">${creatureSVG(c, true)}</div>
+      : `<div style="font-weight:bold;color:var(--sub)">No.${c.no}</div>
+         <div class="big">${art(c, true)}</div>
          <div style="font-size:24px;font-weight:bold;color:#a99f8a">？？？</div>
          <div style="color:#f5b301;font-size:20px">${stars(c.rare)}</div>
          <p class="desc">${hint ? '💡 ヒント：' + esc(hint) : 'まだ みつけていないよ。どこに かくれているかな？'}</p>
@@ -448,11 +578,11 @@
     const d = new Date(t);
     return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
   }
-  const esc = s => s.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  function esc(s) { return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch])); }
 
   function toast(msg) {
     const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-    clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600);
+    clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2800);
   }
 
   // ===== 音と紙ふぶき =====
@@ -491,23 +621,24 @@
   function handleCode(text) {
     const m = String(text).match(/found=([A-Za-z0-9]+)/);
     const token = m ? m[1] : String(text).trim();
-    const c = CREATURES.find(x => x.token === token);
-    if (!c) { toast('このQRコードは かくれっこ じゃないみたい…'); return false; }
+    const c = allCreatures().find(x => x.token === token);
+    if (!c) { toast('このQRコードは かくれっこ じゃないみたい…（絵の キャラは つくった スマホで よんでね）'); return false; }
     const isNew = !state.found[c.id];
     if (isNew) { state.found[c.id] = Date.now(); save(); }
-    $('#foundLabel').textContent = `No.${c.id}`;
+    $('#foundLabel').textContent = `No.${c.no}`;
     $('#foundTitle').textContent = isNew ? 'みつけた！' : 'また あえたね！';
-    $('#foundArt').innerHTML = creatureSVG(c, false);
+    $('#foundArt').innerHTML = art(c, false);
     $('#foundArt').className = 'big ' + (isNew ? 'reveal' : 'wiggle');
     $('#foundName').textContent = c.name;
     $('#foundStars').textContent = stars(c.rare);
-    $('#foundDesc').textContent = isNew ? c.desc : 'この こは もう ずかんに のっているよ。';
+    $('#foundDesc').textContent = isNew ? descOf(c) : 'この こは もう ずかんに のっているよ。';
     const sheet = $('#foundOverlay .sheet');
     sheet.classList.remove('pop'); void sheet.offsetWidth; sheet.classList.add('pop');
     $('#foundOverlay').classList.add('show');
     if (isNew) { chime(FOUND_SOUND); confetti(40 + c.rare * 20); if (navigator.vibrate) navigator.vibrate([80, 60, 160]); }
     else chime([[784, 0, .15], [1047, .12, .3]]);
-    pendingComplete = isNew && foundCount() === TOTAL;
+    const list = activeCreatures();
+    pendingComplete = isNew && list.some(x => x.id === c.id) && foundCount(list) === list.length;
     renderCount();
     return true;
   }
@@ -519,12 +650,13 @@
 
   function showComplete() {
     showView('zukan');
-    const art = CREATURES.slice(0, 3).map(c => `<div style="width:30%;display:inline-block">${creatureSVG(c, false)}</div>`).join('');
+    const list = activeCreatures();
+    const pics = list.slice(-3).map(c => `<div style="width:30%;display:inline-block">${art(c, false)}</div>`).join('');
     $('#detailSheet').innerHTML = `
       <div style="font-size:40px">🏆</div>
       <h3>コンプリート！</h3>
-      <p style="font-weight:bold;font-size:18px">${TOTAL}ぴき ぜんぶ みつけたよ！<br>かくれっこ はかせ だね！</p>
-      <div class="wiggle">${art}</div>
+      <p style="font-weight:bold;font-size:18px">${list.length}ひき ぜんぶ みつけたよ！<br>かくれっこ はかせ だね！</p>
+      <div class="wiggle">${pics}</div>
       <button class="btn" style="width:100%;margin-top:10px" data-close>やったー！</button>`;
     $('#detailOverlay').classList.add('show');
     $('#detailSheet').querySelector('[data-close]').addEventListener('click', closeDetail);
@@ -607,17 +739,30 @@
     $('#gateBox').style.display = unlocked ? 'none' : '';
     $('#parentBox').style.display = unlocked ? '' : 'none';
     if (!unlocked) { newGate(); return; }
+    $('#useOriginals').checked = state.useOriginals;
     $('#qrUrlNote').textContent = 'QRコードの中身：' + baseUrl() + '#found=…' +
       (location.protocol === 'https:' ? '' : '　※ いまは https ではありません。GitHub Pages で開いてから印刷してください。');
-    $('#hintList').innerHTML = CREATURES.map(c => `
+    renderCustomList();
+    $('#hintList').innerHTML = activeCreatures().map(c => `
       <div class="hint-row">
-        ${creatureSVG(c, false)}
-        <div><label>No.${c.id} ${c.name} ${stars(c.rare)}${state.found[c.id] ? '（みつけた）' : ''}</label>
+        ${art(c, false)}
+        <div><label>No.${c.no} ${esc(c.name)} ${stars(c.rare)}${state.found[c.id] ? '（みつけた）' : ''}</label>
         <input data-id="${c.id}" placeholder="ヒントを書く" value="${esc(state.hints[c.id] || '')}"></div>
       </div>`).join('');
     $('#hintList').querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => {
       state.hints[inp.dataset.id] = inp.value; save();
     }));
+  }
+  function renderCustomList() {
+    const list = allCreatures().filter(c => c.img);
+    $('#customList').innerHTML = list.length ? list.map(c => `
+      <div>
+        ${art(c, false)}
+        <div><label>No.${c.no}</label><div style="font-weight:bold">${esc(c.name)}</div><div style="color:#f5b301;font-size:13px">${stars(c.rare)}</div></div>
+        <button class="btn gray small" data-edit="${c.id}">なおす</button>
+      </div>`).join('')
+      : '<p style="font-size:13px;color:var(--sub)">まだ ありません。</p>';
+    $('#customList').querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openEditor(b.dataset.edit)));
   }
   $('#gateBtn').addEventListener('click', () => {
     if (+$('#gateA').value === gateAns) { unlocked = true; renderParent(); }
@@ -625,28 +770,219 @@
   });
   $('#gateA').addEventListener('keydown', e => { if (e.key === 'Enter') $('#gateBtn').click(); });
   $('#lockBtn').addEventListener('click', () => { unlocked = false; renderParent(); });
+  $('#useOriginals').addEventListener('change', e => {
+    if (!e.target.checked && !custom.length) {
+      e.target.checked = true; toast('先に 絵から キャラクターを 作ってください'); return;
+    }
+    state.useOriginals = e.target.checked; save(); renderCount(); renderParent();
+  });
   $('#resetBtn').addEventListener('click', () => {
     if (confirm('図鑑を空にしますか？（見つけた記録が消えます）')) {
       state.found = {}; save(); renderCount(); toast('ずかんを リセットしました');
     }
   });
 
-  function baseUrl() { return location.origin + location.pathname; }
-  function buildPrintSheet() {
-    const grid = $('#qrGrid'); grid.innerHTML = '';
-    CREATURES.forEach(c => {
-      const card = document.createElement('div');
-      card.className = 'qr-card';
-      const q = document.createElement('div'); q.className = 'qr';
-      const lbl = document.createElement('div'); lbl.className = 'lbl';
-      lbl.innerHTML = `No.${c.id}<br>${stars(c.rare)}<small>かくれっこ ずかん</small>`;
-      card.append(q, lbl); grid.appendChild(card);
-      new QRCode(q, { text: baseUrl() + '#found=' + c.token, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.M });
+  // ===== 絵の取り込み =====
+  const ed = { id: null, img: null, rotate: 0, rare: 1, out: null, keepImg: null };
+  function openEditor(id) {
+    const c = id ? custom.find(x => x.id === id) : null;
+    ed.id = c ? c.id : null; ed.img = null; ed.rotate = 0; ed.out = null; ed.keepImg = c ? c.img : null;
+    ed.rare = c ? c.rare : 1;
+    $('#editTitle').textContent = c ? '🖍️ キャラを なおす' : '🖍️ 絵から つくる';
+    $('#edName').value = c ? c.name : '';
+    $('#edDesc').value = c ? (c.desc || '') : '';
+    $('#edDelete').style.display = c ? '' : 'none';
+    $('#procTools').style.display = 'none';
+    $('#optWhite').checked = true; $('#optStrength').value = 50; $('#strengthField').style.display = '';
+    $('#editPreview').innerHTML = c ? `<img src="${c.img}" alt="">` : 'ここに 絵が 出ます';
+    $('#fileIn').value = '';
+    paintRare();
+    $('#editOverlay').classList.add('show');
+    $('#editOverlay .sheet').scrollTop = 0;
+  }
+  function closeEditor() { $('#editOverlay').classList.remove('show'); }
+  function paintRare() { $('#rarePick').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.r === ed.rare)); }
+  $('#rarePick').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { ed.rare = +b.dataset.r; paintRare(); }));
+  $('#newDrawBtn').addEventListener('click', () => openEditor(null));
+  $('#edCancel').addEventListener('click', closeEditor);
+
+  $('#fileIn').addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { ed.img = img; ed.rotate = 0; $('#procTools').style.display = ''; reprocess(); };
+    img.onerror = () => toast('この しゃしんは ひらけませんでした');
+    img.src = url;
+  });
+  let rp = 0;
+  function reprocess() {
+    if (!ed.img) return;
+    cancelAnimationFrame(rp);
+    rp = requestAnimationFrame(() => {
+      ed.out = processDrawing(ed.img, { rotate: ed.rotate, removeWhite: $('#optWhite').checked, strength: +$('#optStrength').value });
+      $('#editPreview').innerHTML = '';
+      $('#editPreview').appendChild(ed.out);
     });
+  }
+  $('#optWhite').addEventListener('change', () => { $('#strengthField').style.display = $('#optWhite').checked ? '' : 'none'; reprocess(); });
+  $('#optStrength').addEventListener('input', reprocess);
+  $('#rotBtn').addEventListener('click', () => { ed.rotate = (ed.rotate + 1) % 4; reprocess(); });
+
+  // 白い紙を透明にして、絵のまわりで切り抜く
+  function processDrawing(img, opt) {
+    const MAX = 900;
+    let w = img.naturalWidth, h = img.naturalHeight;
+    const sc = Math.min(1, MAX / Math.max(w, h));
+    w = Math.round(w * sc); h = Math.round(h * sc);
+    const rot = opt.rotate % 4;
+    const cw = rot % 2 ? h : w, ch = rot % 2 ? w : h;
+    const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.fillStyle = '#fff'; x.fillRect(0, 0, cw, ch);
+    x.translate(cw / 2, ch / 2); x.rotate(rot * Math.PI / 2); x.drawImage(img, -w / 2, -h / 2, w, h);
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    const d = x.getImageData(0, 0, cw, ch), p = d.data;
+
+    let x0 = 0, y0 = 0, x1 = cw - 1, y1 = ch - 1;
+    if (opt.removeWhite) {
+      // 紙の色（明るい方から1割あたり）を求めて、白にそろえる（部屋の明かりの色を補正）
+      const hist = [new Uint32Array(256), new Uint32Array(256), new Uint32Array(256)];
+      let n = 0;
+      for (let i = 0; i < p.length; i += 4 * 7) { hist[0][p[i]]++; hist[1][p[i + 1]]++; hist[2][p[i + 2]]++; n++; }
+      const paper = hist.map(hh => { let acc = 0; for (let v = 255; v >= 0; v--) { acc += hh[v]; if (acc >= n * 0.1) return Math.max(v, 60); } return 255; });
+      const thr = 250 - opt.strength * 0.9; // 強さ0 → 250、50 → 205、100 → 160
+      const soft = 28;
+      x1 = 0; y1 = 0; x0 = cw; y0 = ch;
+      for (let yy = 0; yy < ch; yy++) {
+        for (let xx = 0; xx < cw; xx++) {
+          const i = (yy * cw + xx) * 4;
+          const r = Math.min(255, p[i] * 255 / paper[0]);
+          const g = Math.min(255, p[i + 1] * 255 / paper[1]);
+          const b = Math.min(255, p[i + 2] * 255 / paper[2]);
+          p[i] = r; p[i + 1] = g; p[i + 2] = b;
+          const L = (r + g + b) / 3, chroma = Math.max(r, g, b) - Math.min(r, g, b);
+          let a = 255;
+          if (chroma < 55) a = Math.max(0, Math.min(1, (thr - L) / soft)) * 255;
+          p[i + 3] = a;
+          if (a > 80) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (yy < y0) y0 = yy; if (yy > y1) y1 = yy; }
+        }
+      }
+      if (x1 < x0) { x0 = 0; y0 = 0; x1 = cw - 1; y1 = ch - 1; } // 何も残らなかったとき
+      const pad = Math.round(Math.max(x1 - x0, y1 - y0) * 0.04);
+      x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad);
+      x1 = Math.min(cw - 1, x1 + pad); y1 = Math.min(ch - 1, y1 + pad);
+      x.putImageData(d, 0, 0);
+    }
+    const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+    const OUT = 420, s2 = Math.min(1, OUT / Math.max(bw, bh));
+    const o = document.createElement('canvas');
+    o.width = Math.max(1, Math.round(bw * s2)); o.height = Math.max(1, Math.round(bh * s2));
+    const ox = o.getContext('2d');
+    ox.imageSmoothingQuality = 'high';
+    ox.drawImage(c, x0, y0, bw, bh, 0, 0, o.width, o.height);
+    return o;
+  }
+  function canvasToData(cv) {
+    let u = cv.toDataURL('image/webp', 0.85);
+    if (!u.startsWith('data:image/webp')) u = cv.toDataURL('image/png');
+    return u;
+  }
+  function newToken() {
+    const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    const r = new Uint8Array(10); crypto.getRandomValues(r);
+    return Array.from(r, v => abc[v % abc.length]).join('');
+  }
+
+  $('#edSave').addEventListener('click', () => {
+    const name = $('#edName').value.trim();
+    const img = ed.out ? canvasToData(ed.out) : ed.keepImg;
+    if (!img) { toast('先に 絵の しゃしんを えらんでください'); return; }
+    if (!name) { toast('なまえを つけてください'); $('#edName').focus(); return; }
+    const desc = $('#edDesc').value.trim();
+    const before = JSON.stringify(custom);
+    let isNew = false;
+    if (ed.id) {
+      const c = custom.find(x => x.id === ed.id);
+      Object.assign(c, { name, rare: ed.rare, desc, img });
+    } else {
+      isNew = true;
+      custom.push({ id: 'u' + Date.now().toString(36), token: newToken(), name, rare: ed.rare, desc, img, created: Date.now() });
+    }
+    if (!saveCustom()) { custom = JSON.parse(before); return; }
+    closeEditor(); renderParent(); renderCount();
+    toast(isNew ? `「${name}」を ずかんに のせました。QRコードを 印刷してね` : 'なおしました');
+  });
+  $('#edDelete').addEventListener('click', () => {
+    const c = custom.find(x => x.id === ed.id);
+    if (!c || !confirm(`「${c.name}」を けしますか？（もとに もどせません）`)) return;
+    custom = custom.filter(x => x.id !== ed.id);
+    delete state.found[c.id]; delete state.hints[c.id];
+    if (!custom.length) state.useOriginals = true;
+    saveCustom(); save();
+    closeEditor(); renderParent(); renderCount(); toast('けしました');
+  });
+
+  // ===== バックアップ =====
+  $('#exportBtn').addEventListener('click', () => {
+    const data = { app: 'kakurekko', v: 1, saved: Date.now(), custom, hints: state.hints, found: state.found, useOriginals: state.useOriginals };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const a = document.createElement('a');
+    const d = new Date();
+    a.href = URL.createObjectURL(blob);
+    a.download = `kakurekko-backup-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  });
+  $('#importIn').addEventListener('change', async e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      if (data.app !== 'kakurekko' || !Array.isArray(data.custom)) throw new Error('bad');
+      if (!confirm(`絵のキャラクター ${data.custom.length}ひき と ヒント・図鑑の記録を 読み込みますか？（同じキャラは上書きされます）`)) return;
+      const before = JSON.stringify(custom);
+      data.custom.forEach(c => {
+        if (!c || !c.id || !c.token || typeof c.img !== 'string' || !c.img.startsWith('data:image/')) return;
+        const item = { id: String(c.id), token: String(c.token), name: String(c.name || ''), rare: [1, 2, 3].includes(c.rare) ? c.rare : 1, desc: String(c.desc || ''), img: c.img, created: c.created || Date.now() };
+        const i = custom.findIndex(x => x.id === item.id);
+        if (i >= 0) custom[i] = item; else custom.push(item);
+      });
+      if (!saveCustom()) { custom = JSON.parse(before); return; }
+      Object.assign(state.hints, data.hints || {});
+      Object.assign(state.found, data.found || {});
+      if (data.useOriginals === false && custom.length) state.useOriginals = false;
+      save(); renderParent(); renderCount(); toast('読み込みました');
+    } catch (err) {
+      toast('この ファイルは 読み込めませんでした');
+    } finally { e.target.value = ''; }
+  });
+
+  // ===== 印刷 =====
+  function baseUrl() { return location.origin + location.pathname; }
+  function buildPrintSheet(list) {
+    const sheet = $('#printSheet'); sheet.innerHTML = '';
+    for (let i = 0; i < list.length; i += 10) {
+      const page = document.createElement('div'); page.className = 'print-page';
+      page.innerHTML = '<div class="print-title">かくれっこ ずかん ― QRコード（切り取って隠してください）</div>';
+      const grid = document.createElement('div'); grid.className = 'qr-grid';
+      list.slice(i, i + 10).forEach(c => {
+        const card = document.createElement('div'); card.className = 'qr-card';
+        const q = document.createElement('div'); q.className = 'qr';
+        const lbl = document.createElement('div'); lbl.className = 'lbl';
+        lbl.innerHTML = `No.${c.no}<br>${stars(c.rare)}<small>かくれっこ ずかん${c.img ? ' 🖍️' : ''}</small>`;
+        card.append(q, lbl); grid.appendChild(card);
+        new QRCode(q, { text: baseUrl() + '#found=' + c.token, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.M });
+      });
+      page.appendChild(grid); sheet.appendChild(page);
+    }
   }
   $('#printBtn').addEventListener('click', () => {
     if (!window.QRCode) { toast('QRコードの じゅんびが できませんでした。ネットに つないでね'); return; }
-    buildPrintSheet();
+    const what = (document.querySelector('input[name=printWhat]:checked') || {}).value;
+    const list = what === 'custom' ? allCreatures().filter(c => c.img) : activeCreatures();
+    if (!list.length) { toast('印刷する キャラクターが いません'); return; }
+    buildPrintSheet(list);
     setTimeout(() => window.print(), 400);
   });
 
@@ -661,7 +997,7 @@
   window.addEventListener('hashchange', checkHash);
 
   // ===== はじめ =====
-  $('#heroArt').innerHTML = creatureSVG(CREATURES[0], false);
+  $('#heroArt').innerHTML = creatureSVG(ORIGINALS[0], false);
   renderCount();
   checkHash();
 })();
