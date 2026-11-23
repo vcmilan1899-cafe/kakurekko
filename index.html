@@ -258,7 +258,7 @@
       </div>
       <div class="panel">
         <h2>🎮 あそぶ キャラクター</h2>
-        <label class="chk"><input type="checkbox" id="useOriginals"> さいしょの10ぴき（モリモリ〜スケルン）も いっしょに あそぶ</label>
+        <label class="chk"><input type="checkbox" id="useOriginals"> さいしょの11ぴき（モリモリ〜ニジニジ）も いっしょに あそぶ</label>
         <p style="font-size:13px">オフにすると、絵から作ったキャラクターだけで遊べます（図鑑の数やコンプリートも、その子たちだけで数えます）。</p>
       </div>
       <div class="panel">
@@ -267,6 +267,7 @@
         <div class="radio-row" id="printPick">
           <label><input type="radio" name="printWhat" value="active" checked> あそぶ キャラ ぜんぶ</label>
           <label><input type="radio" name="printWhat" value="custom"> 絵から作った キャラだけ</label>
+          <label><input type="radio" name="printWhat" value="one"> 1ぴきだけ：<select id="printOne"></select></label>
         </div>
         <p style="font-size:13px" id="qrUrlNote"></p>
         <button class="btn" id="printBtn">印刷する</button>
@@ -387,6 +388,8 @@
       desc: 'きんいろに かがやく でんせつの かくれっこ。みつけると いいことが あるらしい。' },
     { id: 10, token: 'sU3gM5tb', name: 'スケルン', rare: 3, c1: '#cdeffd', c2: '#7bbbd6', pat: 'clear',
       desc: 'からだが すきとおっていて ほとんど みえない。いちばん かくれるのが じょうず。' },
+    { id: 11, token: 'rW8eN3jv', name: 'ニジニジ', rare: 3, c1: '#ffa3cc', c2: '#7d5cd6', pat: 'nijiniji',
+      desc: 'にじいろの しましまの からだに、にじと くもの もようが ある。わらうと あたまの トゲトゲが ぴんと たつ。' },
   ];
   ORIGINALS.forEach(c => { c.no = c.id; });
 
@@ -454,8 +457,57 @@
       default: return '';
     }
   }
+  // No.11 ニジニジ（むすめさんの 絵から うまれた かくれっこ）
+  function nijinijiSVG(c, sil, id) {
+    const g = '#b4aa96', gd = '#9d937e';
+    const stripes = ['#cfe07a', '#ffc9a3', '#f0fa86', '#ffa3cc', '#a6e384', '#ffd45a', '#c27ddb'];
+    let y = 50;
+    const bands = stripes.map((col, i) => { const h = i === 0 || i === 6 ? 13 : 11; const r = `<rect x="30" y="${y}" width="140" height="${h + 1}" fill="${col}"/>`; y += h; return r; }).join('');
+    const spikes = `
+      <path d="M125 54 L130 31 L143 46" fill="${sil ? gd : '#4cbf6a'}" stroke="${sil ? gd : '#4cbf6a'}" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M139 45 L150 23 L161 45" fill="${sil ? gd : '#9b5cc9'}" stroke="${sil ? gd : '#9b5cc9'}" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M157 46 L171 32 L175 55" fill="${sil ? gd : '#4cbf6a'}" stroke="${sil ? gd : '#4cbf6a'}" stroke-width="3" stroke-linejoin="round"/>`;
+    const tail = `<path d="M46 98 C 14 100, 10 62, 34 56 C 54 51, 60 76, 44 79 C 34 81, 32 69, 40 67" fill="none" stroke="${sil ? g : '#c07ad8'}" stroke-width="13" stroke-linecap="round"/>`;
+    const legs = `<g fill="${sil ? gd : '#b46ad4'}">
+      <rect x="58" y="114" width="13" height="22" rx="6.5"/><rect x="80" y="119" width="13" height="18" rx="6.5"/>
+      <rect x="106" y="119" width="13" height="18" rx="6.5"/><rect x="128" y="113" width="13" height="22" rx="6.5"/></g>`;
+    const shadow = `<ellipse cx="104" cy="139" rx="64" ry="7" fill="#000" opacity=".08"/>`;
+    if (sil) {
+      return `<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="まだ みつけていない">
+        ${shadow}${tail}${legs}${spikes}
+        <g fill="${g}"><ellipse cx="96" cy="92" rx="56" ry="38"/><circle cx="150" cy="70" r="30"/></g>
+        <text x="150" y="82" text-anchor="middle" font-size="30" font-weight="bold" fill="#fff">？</text></svg>`;
+    }
+    return `<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${c.name}">
+      <defs><clipPath id="${id}b"><ellipse cx="96" cy="92" rx="56" ry="38"/></clipPath><clipPath id="${id}h"><circle cx="150" cy="70" r="30"/></clipPath></defs>
+      ${shadow}${tail}
+      <path d="M46 98 C 14 100, 10 62, 34 56" fill="none" stroke="#e7b6f2" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+      ${legs}
+      <g clip-path="url(#${id}b)">${bands}</g>
+      <g fill="none" stroke-linecap="round">
+        <path d="M62 96 A 18 18 0 0 1 98 96" stroke="#fff" stroke-width="13"/>
+        <path d="M62 96 A 18 18 0 0 1 98 96" stroke="#ff7a7a" stroke-width="4"/>
+        <path d="M67.5 96 A 12.5 12.5 0 0 1 92.5 96" stroke="#ffc145" stroke-width="4"/>
+        <path d="M73 96 A 7 7 0 0 1 87 96" stroke="#5ab8f0" stroke-width="4"/>
+      </g>
+      <g fill="#fff" opacity=".95"><circle cx="112" cy="108" r="6"/><circle cx="119" cy="103" r="8"/><circle cx="127" cy="108" r="6"/><rect x="112" y="106" width="15" height="8" rx="4"/></g>
+      ${spikes}
+      <circle cx="150" cy="70" r="30" fill="#fff1e0"/>
+      <g clip-path="url(#${id}h)" stroke-width="3.2" stroke-linecap="round" opacity=".75">
+        <path d="M118 66 L150 38" stroke="#5aa9e6"/><path d="M118 78 L160 40" stroke="#ff9f43"/>
+        <path d="M122 88 L170 44" stroke="#4cbf6a"/><path d="M128 96 L178 52" stroke="#ff6b6b"/>
+        <path d="M136 100 L182 62" stroke="#5aa9e6"/><path d="M146 102 L182 74" stroke="#ff9f43"/>
+        <path d="M158 102 L182 86" stroke="#4cbf6a"/>
+      </g>
+      <circle cx="158" cy="64" r="14" fill="#7d5cd6"/><circle cx="159" cy="64" r="10" fill="#fff"/>
+      <circle cx="162" cy="65" r="5.2" fill="#2b2b2b"/><circle cx="164" cy="62.5" r="2" fill="#fff"/>
+      <circle cx="138" cy="84" r="5.5" fill="#ff8fb3" opacity=".8"/>
+      <path d="M156 84 Q170 98 181 80" fill="none" stroke="#3b3427" stroke-width="3.6" stroke-linecap="round"/>
+    </svg>`;
+  }
   function creatureSVG(c, silhouette) {
     const id = 'k' + (++uid);
+    if (c.pat === 'nijiniji') return nijinijiSVG(c, silhouette, id);
     const gray = '#b4aa96';
     let defs = '';
     let bodyFill = c.c1;
@@ -743,6 +795,10 @@
     $('#qrUrlNote').textContent = 'QRコードの中身：' + baseUrl() + '#found=…' +
       (location.protocol === 'https:' ? '' : '　※ いまは https ではありません。GitHub Pages で開いてから印刷してください。');
     renderCustomList();
+    const sel = $('#printOne'), keep = sel.value;
+    sel.innerHTML = allCreatures().map(c => `<option value="${c.id}">No.${c.no} ${esc(c.name)}</option>`).join('');
+    sel.value = keep || '11';
+    if (!sel.value) sel.selectedIndex = 0;
     $('#hintList').innerHTML = activeCreatures().map(c => `
       <div class="hint-row">
         ${art(c, false)}
@@ -980,7 +1036,9 @@
   $('#printBtn').addEventListener('click', () => {
     if (!window.QRCode) { toast('QRコードの じゅんびが できませんでした。ネットに つないでね'); return; }
     const what = (document.querySelector('input[name=printWhat]:checked') || {}).value;
-    const list = what === 'custom' ? allCreatures().filter(c => c.img) : activeCreatures();
+    const list = what === 'custom' ? allCreatures().filter(c => c.img)
+      : what === 'one' ? allCreatures().filter(c => String(c.id) === $('#printOne').value)
+      : activeCreatures();
     if (!list.length) { toast('印刷する キャラクターが いません'); return; }
     buildPrintSheet(list);
     setTimeout(() => window.print(), 400);
