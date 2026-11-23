@@ -126,6 +126,17 @@
   .hint-row { display: grid; grid-template-columns: 56px 1fr; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px dashed var(--line); }
   .hint-row input { width: 100%; padding: 10px; border: 2px solid var(--line); border-radius: 10px; font: inherit; font-size: 15px; -webkit-user-select: text; user-select: text; }
   .hint-row label, .row-list label { font-size: 13px; color: var(--sub); font-weight: bold; }
+  .pick-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; font-size: 14px; }
+  .pick-tools select { font: inherit; padding: 6px 8px; border-radius: 10px; border: 2px solid var(--line); background: #fff; }
+  .pick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  @media (min-width: 560px) { .pick-grid { grid-template-columns: repeat(5, 1fr); } }
+  .pick { border: 3px solid transparent; background: #f1ebdd; border-radius: 12px; padding: 4px 4px 6px; font-size: 12px; position: relative; opacity: .5; text-align: center; }
+  .pick.on { border-color: var(--main); background: #eef8f1; opacity: 1; }
+  .pick.on::after { content: '✓'; position: absolute; top: 0; right: 6px; color: var(--main-dark); font-weight: bold; font-size: 18px; }
+  .pick .nm { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  details.rest { margin-top: 24px; }
+  details.rest summary { font-weight: bold; color: var(--sub); cursor: pointer; padding: 8px 0; font-size: 16px; }
+  details.rest .card { opacity: .7; }
   .chk { display: flex; gap: 8px; align-items: center; font-size: 15px; margin: 8px 0; }
   .chk input { width: 22px; height: 22px; accent-color: var(--main); }
   .radio-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
@@ -257,9 +268,20 @@
         <div class="row-list" id="customList" style="margin-top:10px"></div>
       </div>
       <div class="panel">
-        <h2>🎮 あそぶ キャラクター</h2>
-        <label class="chk"><input type="checkbox" id="useOriginals"> さいしょの11ぴき（モリモリ〜ニジニジ）も いっしょに あそぶ</label>
-        <p style="font-size:13px">オフにすると、絵から作ったキャラクターだけで遊べます（図鑑の数やコンプリートも、その子たちだけで数えます）。</p>
+        <h2>🎮 こんかい あそぶ キャラクター</h2>
+        <p>タップして選びます。選んだ子だけで遊べます（図鑑・数・コンプリート・「あそぶ キャラ ぜんぶ」の印刷が、その子たちだけになります）。選ばなかった子の記録は消えません。</p>
+        <div class="pick-tools">
+          <button class="btn small" id="pickAll">ぜんぶ</button>
+          <button class="btn gray small" id="pickNone">ぜんぶ はずす</button>
+          <button class="btn gray small" id="pickOrig">さいしょの11ぴき</button>
+          <button class="btn gray small" id="pickDrawn">絵の キャラだけ</button>
+        </div>
+        <div class="pick-tools">
+          <button class="btn orange small" id="pickRandom">🎲 ランダムに えらぶ</button>
+          <select id="pickN"><option>5</option><option>8</option><option selected>10</option><option>15</option><option>20</option></select>ひき
+        </div>
+        <p id="pickInfo" style="font-weight:bold;color:var(--main-dark)"></p>
+        <div class="pick-grid" id="pickGrid"></div>
       </div>
       <div class="panel">
         <h2>🖨️ QRコードを いんさつ</h2>
@@ -279,8 +301,9 @@
       </div>
       <div class="panel">
         <h2>🔄 さいしょから あそぶ</h2>
-        <p>図鑑を空にします。隠し場所を変えて、もう一度遊ぶときに使ってください。ヒントと、絵から作ったキャラクターは残ります。</p>
-        <button class="btn red" id="resetBtn">ずかんを リセット</button>
+        <p>見つけた記録を消します。隠し場所を変えて、もう一度遊ぶときに使ってください。ヒントと、絵から作ったキャラクターは残ります。</p>
+        <button class="btn orange" id="resetActiveBtn">こんかいの キャラだけ リセット</button>
+        <button class="btn red" id="resetBtn" style="margin-top:8px">ぜんぶ リセット</button>
       </div>
       <div class="panel">
         <h2>💾 バックアップ</h2>
@@ -398,10 +421,15 @@
   const KEY = 'kakurekko.v1';
   const CKEY = 'kakurekko.custom.v1';
   function load() {
-    const s = { found: {}, hints: {}, useOriginals: true };
+    // selected: null = ぜんぶで あそぶ ／ ['1','u…', …] = えらんだ子だけ
+    const s = { found: {}, hints: {}, selected: null };
     try {
       const d = JSON.parse(localStorage.getItem(KEY));
-      if (d) { s.found = d.found || {}; s.hints = d.hints || {}; if (d.useOriginals === false) s.useOriginals = false; }
+      if (d) {
+        s.found = d.found || {}; s.hints = d.hints || {};
+        if (Array.isArray(d.selected)) s.selected = d.selected.map(String);
+        else if (d.useOriginals === false) s.legacyDrawnOnly = true; // 前の「絵だけで遊ぶ」設定
+      }
     } catch (e) {}
     return s;
   }
@@ -411,6 +439,7 @@
   }
   let state = load();
   let custom = loadCustom(); // [{ id:'u…', token, name, rare, desc, img(dataURL), created }]
+  if (state.legacyDrawnOnly) { if (custom.length) state.selected = custom.map(c => c.id); delete state.legacyDrawnOnly; }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
   function saveCustom() {
     try { localStorage.setItem(CKEY, JSON.stringify(custom)); return true; }
@@ -422,9 +451,12 @@
   }
   function activeCreatures() {
     const all = allCreatures();
-    const list = all.filter(c => !c.img ? state.useOriginals : true);
-    return list.length ? list : ORIGINALS; // 何もなければ最初の10ぴき
+    if (!Array.isArray(state.selected)) return all;
+    const set = new Set(state.selected);
+    const list = all.filter(c => set.has(String(c.id)));
+    return list.length ? list : all; // だれも えらんでいなければ ぜんぶ
   }
+  const isActive = c => activeCreatures().some(x => x.id === c.id);
   const findById = id => allCreatures().find(c => String(c.id) === String(id));
   const foundCount = list => list.filter(c => state.found[c.id]).length;
 
@@ -598,6 +630,9 @@
     let html = '';
     if (orig.length) html += (drawn.length ? '<h2 class="section-title">かくれっこ</h2>' : '') + `<div class="grid">${orig.map(cardHTML).join('')}</div>`;
     if (drawn.length) html += '<h2 class="section-title">🖍️ おうちで うまれた かくれっこ</h2>' + `<div class="grid">${drawn.map(cardHTML).join('')}</div>`;
+    const activeIds = new Set(list.map(c => c.id));
+    const rest = allCreatures().filter(c => !activeIds.has(c.id));
+    if (rest.length) html += `<details class="rest"><summary>🌙 こんかいは おやすみの こ（${rest.length}ひき）</summary><div class="grid">${rest.map(cardHTML).join('')}</div></details>`;
     $('#zukanBody').innerHTML = html;
     $('#zukanBody').querySelectorAll('.card').forEach(el =>
       el.addEventListener('click', () => openDetail(findById(el.dataset.id))));
@@ -791,7 +826,7 @@
     $('#gateBox').style.display = unlocked ? 'none' : '';
     $('#parentBox').style.display = unlocked ? '' : 'none';
     if (!unlocked) { newGate(); return; }
-    $('#useOriginals').checked = state.useOriginals;
+    renderPick();
     $('#qrUrlNote').textContent = 'QRコードの中身：' + baseUrl() + '#found=…' +
       (location.protocol === 'https:' ? '' : '　※ いまは https ではありません。GitHub Pages で開いてから印刷してください。');
     renderCustomList();
@@ -799,6 +834,9 @@
     sel.innerHTML = allCreatures().map(c => `<option value="${c.id}">No.${c.no} ${esc(c.name)}</option>`).join('');
     sel.value = keep || '11';
     if (!sel.value) sel.selectedIndex = 0;
+    renderHints();
+  }
+  function renderHints() {
     $('#hintList').innerHTML = activeCreatures().map(c => `
       <div class="hint-row">
         ${art(c, false)}
@@ -826,15 +864,64 @@
   });
   $('#gateA').addEventListener('keydown', e => { if (e.key === 'Enter') $('#gateBtn').click(); });
   $('#lockBtn').addEventListener('click', () => { unlocked = false; renderParent(); });
-  $('#useOriginals').addEventListener('change', e => {
-    if (!e.target.checked && !custom.length) {
-      e.target.checked = true; toast('先に 絵から キャラクターを 作ってください'); return;
+  // ===== こんかい あそぶ キャラの えらびかた =====
+  function selectedSet() {
+    return new Set(Array.isArray(state.selected) ? state.selected : allCreatures().map(c => String(c.id)));
+  }
+  function renderPickInfo() {
+    const n = Array.isArray(state.selected) ? state.selected.length : allCreatures().length;
+    const total = allCreatures().length;
+    $('#pickInfo').textContent = n === 0
+      ? `0ぴき（だれも選んでいないので、このままだと ${total}ひき ぜんぶで遊びます）`
+      : `${total}ひき中 ${n}ひき を選んでいます`;
+  }
+  function renderPick() {
+    const set = selectedSet();
+    $('#pickGrid').innerHTML = allCreatures().map(c => `
+      <button class="pick ${set.has(String(c.id)) ? 'on' : ''}" data-id="${c.id}">
+        ${art(c, false)}<div>No.${c.no}</div><div class="nm">${esc(c.name)}</div>
+      </button>`).join('');
+    $('#pickGrid').querySelectorAll('.pick').forEach(b => b.addEventListener('click', () => {
+      const set = selectedSet(), id = b.dataset.id;
+      if (set.has(id)) set.delete(id); else set.add(id);
+      setSelected([...set], false);
+      b.classList.toggle('on', set.has(id));
+    }));
+    renderPickInfo();
+  }
+  function setSelected(ids, redraw = true) {
+    const all = allCreatures();
+    const set = new Set(ids.map(String));
+    // 図鑑の じゅんばんに そろえる。ぜんぶ選んだときは null（あとで作った子も自動で入る）
+    state.selected = set.size === all.length ? null : all.map(c => String(c.id)).filter(id => set.has(id));
+    save(); renderCount(); renderHints();
+    if (redraw) renderPick(); else renderPickInfo();
+  }
+  $('#pickAll').addEventListener('click', () => setSelected(allCreatures().map(c => c.id)));
+  $('#pickNone').addEventListener('click', () => setSelected([]));
+  $('#pickOrig').addEventListener('click', () => setSelected(ORIGINALS.map(c => c.id)));
+  $('#pickDrawn').addEventListener('click', () => {
+    const ids = custom.map(c => c.id);
+    if (!ids.length) { toast('まだ 絵の キャラクターが いません'); return; }
+    setSelected(ids);
+  });
+  $('#pickRandom').addEventListener('click', () => {
+    const ids = allCreatures().map(c => c.id);
+    for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
+    const n = Math.min(+$('#pickN').value, ids.length);
+    setSelected(ids.slice(0, n));
+    toast(`${n}ひき えらびました`);
+  });
+
+  $('#resetActiveBtn').addEventListener('click', () => {
+    const list = activeCreatures();
+    if (confirm(`こんかい遊ぶ ${list.length}ひき の 見つけた記録を 消しますか？（ほかの子の記録は残ります）`)) {
+      list.forEach(c => delete state.found[c.id]); save(); renderCount(); renderHints(); toast('リセットしました');
     }
-    state.useOriginals = e.target.checked; save(); renderCount(); renderParent();
   });
   $('#resetBtn').addEventListener('click', () => {
-    if (confirm('図鑑を空にしますか？（見つけた記録が消えます）')) {
-      state.found = {}; save(); renderCount(); toast('ずかんを リセットしました');
+    if (confirm('ぜんぶの子の 見つけた記録を 消しますか？')) {
+      state.found = {}; save(); renderCount(); renderHints(); toast('ずかんを リセットしました');
     }
   });
 
@@ -966,6 +1053,8 @@
       custom.push({ id: 'u' + Date.now().toString(36), token: newToken(), name, rare: ed.rare, desc, img, created: Date.now() });
     }
     if (!saveCustom()) { custom = JSON.parse(before); return; }
+    // 選んで遊んでいるときは、新しく作った子も「こんかい あそぶ」に入れる
+    if (isNew && Array.isArray(state.selected)) { state.selected.push(custom[custom.length - 1].id); save(); }
     closeEditor(); renderParent(); renderCount();
     toast(isNew ? `「${name}」を ずかんに のせました。QRコードを 印刷してね` : 'なおしました');
   });
@@ -974,14 +1063,14 @@
     if (!c || !confirm(`「${c.name}」を けしますか？（もとに もどせません）`)) return;
     custom = custom.filter(x => x.id !== ed.id);
     delete state.found[c.id]; delete state.hints[c.id];
-    if (!custom.length) state.useOriginals = true;
+    if (Array.isArray(state.selected)) state.selected = state.selected.filter(id => id !== c.id);
     saveCustom(); save();
     closeEditor(); renderParent(); renderCount(); toast('けしました');
   });
 
   // ===== バックアップ =====
   $('#exportBtn').addEventListener('click', () => {
-    const data = { app: 'kakurekko', v: 1, saved: Date.now(), custom, hints: state.hints, found: state.found, useOriginals: state.useOriginals };
+    const data = { app: 'kakurekko', v: 1, saved: Date.now(), custom, hints: state.hints, found: state.found, selected: state.selected };
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const a = document.createElement('a');
     const d = new Date();
@@ -1007,7 +1096,9 @@
       if (!saveCustom()) { custom = JSON.parse(before); return; }
       Object.assign(state.hints, data.hints || {});
       Object.assign(state.found, data.found || {});
-      if (data.useOriginals === false && custom.length) state.useOriginals = false;
+      if (Array.isArray(data.selected)) state.selected = data.selected.map(String);
+      else if (data.useOriginals === false && data.custom.length) state.selected = data.custom.map(c => String(c.id));
+      else if ('selected' in data) state.selected = null;
       save(); renderParent(); renderCount(); toast('読み込みました');
     } catch (err) {
       toast('この ファイルは 読み込めませんでした');
