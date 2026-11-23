@@ -134,9 +134,9 @@
   .pick.on { border-color: var(--main); background: #eef8f1; opacity: 1; }
   .pick.on::after { content: '✓'; position: absolute; top: 0; right: 6px; color: var(--main-dark); font-weight: bold; font-size: 18px; }
   .pick .nm { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #foundClose.locked { background: #cfc6b2; box-shadow: 0 4px 0 #b3a98f; position: relative; overflow: hidden; cursor: default; transform: none; }
-  #foundClose .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--main); opacity: .55; animation: lockfill linear forwards; }
-  #foundClose .lbl { position: relative; }
+  .btn.locked { background: #cfc6b2; box-shadow: 0 4px 0 #b3a98f; position: relative; overflow: hidden; cursor: default; transform: none; }
+  .btn .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--main); opacity: .55; animation: lockfill linear forwards; }
+  .btn .lbl { position: relative; }
   @keyframes lockfill { to { width: 100%; } }
   .sleep { position: relative; }
   .sleep .art { filter: grayscale(.5) opacity(.75); animation: breathe 2.6s ease-in-out infinite; }
@@ -668,7 +668,10 @@
     $('#detailSheet').querySelector('[data-close]').addEventListener('click', closeDetail);
   }
   function closeDetail() { $('#detailOverlay').classList.remove('show'); }
-  $('#detailOverlay').addEventListener('click', e => { if (e.target.id === 'detailOverlay') closeDetail(); });
+  $('#detailOverlay').addEventListener('click', e => {
+    // 待ち時間中は、まわりをタップしても とじない
+    if (e.target.id === 'detailOverlay' && !$('#detailSheet .locked')) closeDetail();
+  });
 
   function fmtDate(t) {
     const d = new Date(t);
@@ -715,17 +718,17 @@
   // ===== はっけん！ =====
   let pendingComplete = false;
   // はじめて見つけたときは、だれを見つけたか ゆっくり見られるように 数秒ボタンを押せなくする
-  const FOUND_LOCK_MS = 3000;
-  let lockTimer = 0;
-  function lockFoundClose(ms) {
-    const b = $('#foundClose');
-    clearTimeout(lockTimer);
-    const unlock = () => { b.disabled = false; b.classList.remove('locked'); b.textContent = 'ずかんを みる'; };
+  const FOUND_LOCK_MS = 3000;     // はじめて見つけたとき
+  const COMPLETE_LOCK_MS = 4000;  // コンプリートのとき
+  function lockButton(b, ms, doneText, waitText) {
+    clearTimeout(b._lockTimer);
+    const unlock = () => { b.disabled = false; b.classList.remove('locked'); b.textContent = doneText; };
     if (!ms) { unlock(); return; }
     b.disabled = true; b.classList.add('locked');
-    b.innerHTML = `<span class="fill" style="animation-duration:${ms}ms"></span><span class="lbl">👀 よく みてね…</span>`;
-    lockTimer = setTimeout(unlock, ms);
+    b.innerHTML = `<span class="fill" style="animation-duration:${ms}ms"></span><span class="lbl">${waitText}</span>`;
+    b._lockTimer = setTimeout(unlock, ms);
   }
+  const lockFoundClose = ms => lockButton($('#foundClose'), ms, 'ずかんを みる', '👀 よく みてね…');
   function handleCode(text, fromCamera) {
     const m = String(text).match(/found=([A-Za-z0-9]+)/);
     const token = m ? m[1] : String(text).trim();
@@ -790,7 +793,9 @@
       <div class="wiggle">${pics}</div>
       <button class="btn" style="width:100%;margin-top:10px" data-close>やったー！</button>`;
     $('#detailOverlay').classList.add('show');
-    $('#detailSheet').querySelector('[data-close]').addEventListener('click', closeDetail);
+    const doneBtn = $('#detailSheet').querySelector('[data-close]');
+    doneBtn.addEventListener('click', closeDetail);
+    lockButton(doneBtn, COMPLETE_LOCK_MS, 'やったー！', '🎉 おめでとう！');
     chime(COMPLETE_SOUND); confetti(160);
     if (navigator.vibrate) navigator.vibrate([100, 80, 100, 80, 300]);
   }
