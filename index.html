@@ -134,6 +134,11 @@
   .pick.on { border-color: var(--main); background: #eef8f1; opacity: 1; }
   .pick.on::after { content: '✓'; position: absolute; top: 0; right: 6px; color: var(--main-dark); font-weight: bold; font-size: 18px; }
   .pick .nm { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sleep { position: relative; }
+  .sleep .art { filter: grayscale(.5) opacity(.75); animation: breathe 2.6s ease-in-out infinite; }
+  @keyframes breathe { 50% { transform: scale(1.04, .96) translateY(3px); } }
+  .sleep .zzz { position: absolute; right: 12%; top: 0; font-size: 30px; animation: zzz 2.6s ease-in-out infinite; }
+  @keyframes zzz { 0% { opacity: 0; transform: translate(0, 10px) scale(.7); } 50% { opacity: 1; } 100% { opacity: 0; transform: translate(14px, -16px) scale(1.1); } }
   details.rest { margin-top: 24px; }
   details.rest summary { font-weight: bold; color: var(--sub); cursor: pointer; padding: 8px 0; font-size: 16px; }
   details.rest .card { opacity: .7; }
@@ -705,11 +710,12 @@
 
   // ===== はっけん！ =====
   let pendingComplete = false;
-  function handleCode(text) {
+  function handleCode(text, fromCamera) {
     const m = String(text).match(/found=([A-Za-z0-9]+)/);
     const token = m ? m[1] : String(text).trim();
     const c = allCreatures().find(x => x.token === token);
     if (!c) { toast('このQRコードは かくれっこ じゃないみたい…（絵の キャラは つくった スマホで よんでね）'); return false; }
+    if (!isActive(c)) { showResting(c, fromCamera); return true; } // こんかいは おやすみの子
     const isNew = !state.found[c.id];
     if (isNew) { state.found[c.id] = Date.now(); save(); }
     $('#foundLabel').textContent = `No.${c.no}`;
@@ -734,6 +740,27 @@
     if (pendingComplete) { pendingComplete = false; showComplete(); }
     else showView('zukan');
   });
+
+  // おやすみの子の QR を よんだとき（図鑑には とうろくしない）
+  function showResting(c, fromCamera) {
+    const got = !!state.found[c.id];
+    $('#detailSheet').innerHTML = `
+      <div style="font-size:40px">🌙</div>
+      <h3 style="color:#7d6bb0">あ！ ちがう こ だった</h3>
+      <div class="big sleep">${art(c, !got)}<span class="zzz">💤</span></div>
+      <div style="font-weight:bold;color:var(--sub)">No.${c.no}　${got ? esc(c.name) : '？？？'}</div>
+      <p class="desc" style="text-align:center">この こは こんかい <b>おやすみ</b> だよ。<br>ほかの こを さがしてね！</p>
+      <button class="btn" style="width:100%" data-close>${fromCamera ? '📷 さがしに もどる' : 'さがしに もどる'}</button>`;
+    const sheet = $('#detailSheet');
+    sheet.classList.remove('pop'); void sheet.offsetWidth; sheet.classList.add('pop');
+    $('#detailOverlay').classList.add('show');
+    chime([[392, 0, .25], [330, .22, .45]]);
+    sheet.querySelector('[data-close]').addEventListener('click', () => {
+      closeDetail();
+      showView('search');
+      if (fromCamera) startScan();
+    });
+  }
 
   function showComplete() {
     showView('zukan');
@@ -806,7 +833,7 @@
       }
       busy = false;
       if (text) {
-        if (handleCode(text)) { stopScan(); return; }
+        if (handleCode(text, true)) { stopScan(); return; }
         await new Promise(r => setTimeout(r, 1500)); // 関係ないQRなら少し待って再開
       }
     }
