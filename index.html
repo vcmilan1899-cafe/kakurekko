@@ -282,7 +282,7 @@
         <div class="pick-tools">
           <button class="btn small" id="pickAll">ぜんぶ</button>
           <button class="btn gray small" id="pickNone">ぜんぶ はずす</button>
-          <button class="btn gray small" id="pickOrig">さいしょの11ぴき</button>
+          <button class="btn gray small" id="pickOrig">さいしょの12ひき</button>
           <button class="btn gray small" id="pickDrawn">絵の キャラだけ</button>
         </div>
         <div class="pick-tools">
@@ -422,6 +422,8 @@
       desc: 'からだが すきとおっていて ほとんど みえない。いちばん かくれるのが じょうず。' },
     { id: 11, token: 'rW8eN3jv', name: 'ニジニジ', rare: 3, c1: '#ffa3cc', c2: '#7d5cd6', pat: 'nijiniji',
       desc: 'にじいろの しましまの からだに、にじと くもの もようが ある。わらうと あたまの トゲトゲが ぴんと たつ。' },
+    { id: 12, token: 'lQ5tH9vc', name: 'ルンルン', rare: 3, c1: '#bfe3f7', c2: '#a46ad8', pat: 'runrun',
+      desc: 'そらいろと むらさきの からだに くもが ふわふわ。キラキラの ツノを ふって、いつも ルンルン ごきげん。' },
   ];
   ORIGINALS.forEach(c => { c.no = c.id; });
 
@@ -546,9 +548,51 @@
       <path d="M156 84 Q170 98 181 80" fill="none" stroke="#3b3427" stroke-width="3.6" stroke-linecap="round"/>
     </svg>`;
   }
+  // No.12 ルンルン（むすめさんの 絵から うまれた かくれっこ）
+  function runrunSVG(c, sil, id) {
+    const g = '#b4aa96', gd = '#9d937e';
+    const horn = `<path d="M150 44 L193 9 L172 47 Z" fill="${sil ? gd : `url(#${id}s)`}" stroke="${sil ? gd : '#9aa3ad'}" stroke-width="1.5" stroke-linejoin="round"/>`;
+    const spikes = [[124, 50, 127, 27, 140, 42], [137, 42, 146, 20, 156, 40], [153, 41, 166, 25, 170, 48]]
+      .map(([a, b, cx, cy, d, e]) => `<path d="M${a} ${b} L${cx} ${cy} L${d} ${e} Z" fill="${sil ? gd : '#ffb3cf'}" stroke="${sil ? gd : '#f2cf3a'}" stroke-width="2.6" stroke-linejoin="round"/>`).join('');
+    const tail = `<path d="M46 98 C 10 104, 4 58, 32 52 C 56 47, 62 80, 42 82 C 30 83, 28 68, 38 66" fill="none" stroke="${sil ? g : '#b264d6'}" stroke-width="15" stroke-linecap="round"/>`;
+    const legs = `<g fill="${sil ? gd : '#b77ae0'}">
+      <rect x="58" y="112" width="15" height="24" rx="7.5"/><rect x="80" y="118" width="15" height="19" rx="7.5"/>
+      <rect x="104" y="118" width="15" height="19" rx="7.5"/><rect x="126" y="112" width="15" height="24" rx="7.5"/></g>`;
+    const shadow = `<ellipse cx="104" cy="139" rx="64" ry="7" fill="#000" opacity=".08"/>`;
+    if (sil) {
+      return `<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="まだ みつけていない">
+        ${shadow}${tail}${legs}${spikes}${horn}
+        <g fill="${g}"><ellipse cx="96" cy="92" rx="56" ry="38"/><circle cx="150" cy="72" r="29"/></g>
+        <text x="150" y="84" text-anchor="middle" font-size="30" font-weight="bold" fill="#fff">？</text></svg>`;
+    }
+    const cloud = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})" fill="#fbf7ff" stroke="#5b4a72" stroke-width="1.6">
+      <path d="M-14 6 C-20 6 -20 -3 -13 -3 C-14 -11 -4 -13 -1 -7 C2 -15 14 -13 13 -4 C20 -5 21 6 14 6 Z"/></g>`;
+    const sparkles = [[166, 30, 2], [178, 21, 1.6], [159, 40, 1.4], [184, 14, 1.2], [170, 38, 1.2], [174, 27, 1], [163, 35, 1]]
+      .map(([x, y, r], i) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${i % 2 ? '#8e97a3' : '#fff'}"/>`).join('')
+      + star(186, 30, 5, '#fff3a6') + star(141, 16, 4, '#fff3a6');
+    return `<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${c.name}">
+      <defs>
+        <linearGradient id="${id}g" x1="0" x2="1"><stop offset="0" stop-color="#b56bd8"/><stop offset=".45" stop-color="#a98be6"/><stop offset="1" stop-color="#9fd0f2"/></linearGradient>
+        <linearGradient id="${id}s" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#c9ced6"/><stop offset=".5" stop-color="#f4f6f9"/><stop offset="1" stop-color="#aeb5bf"/></linearGradient>
+      </defs>
+      ${shadow}${tail}
+      <path d="M46 98 C 10 104, 4 58, 32 52" fill="none" stroke="#e2b8f4" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+      ${legs}
+      <ellipse cx="96" cy="92" rx="56" ry="38" fill="url(#${id}g)"/>
+      ${cloud(70, 78, 1)}${cloud(100, 100, 1.05)}${cloud(66, 106, .85)}${cloud(116, 74, .8)}
+      ${spikes}${horn}${sparkles}
+      <circle cx="150" cy="72" r="29" fill="#c4e6f8" stroke="#f2cf3a" stroke-width="3"/>
+      <path d="M128 60 Q134 70 130 84" fill="none" stroke="#9fd0f2" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+      <circle cx="157" cy="64" r="11" fill="#fff" stroke="#4a4a4a" stroke-width="2"/>
+      <circle cx="159" cy="65" r="6" fill="#3a3a3a"/><circle cx="161" cy="62.5" r="2.2" fill="#fff"/>
+      <circle cx="139" cy="80" r="6" fill="#ff9fbc" opacity=".85"/>
+      <path d="M147 86 Q164 100 179 82" fill="none" stroke="#2f2a36" stroke-width="3.4" stroke-linecap="round"/>
+    </svg>`;
+  }
   function creatureSVG(c, silhouette) {
     const id = 'k' + (++uid);
     if (c.pat === 'nijiniji') return nijinijiSVG(c, silhouette, id);
+    if (c.pat === 'runrun') return runrunSVG(c, silhouette, id);
     const gray = '#b4aa96';
     let defs = '';
     let bodyFill = c.c1;
@@ -881,7 +925,7 @@
     renderCustomList();
     const sel = $('#printOne'), keep = sel.value;
     sel.innerHTML = allCreatures().map(c => `<option value="${c.id}">No.${c.no} ${esc(c.name)}</option>`).join('');
-    sel.value = keep || '11';
+    sel.value = keep || '12';
     if (!sel.value) sel.selectedIndex = 0;
     renderHints();
   }
